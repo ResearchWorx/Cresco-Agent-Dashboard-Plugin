@@ -1,0 +1,5 @@
+.idea
+*.iml
+*.ini
+/target
+db.properties

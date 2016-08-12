@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block css %}<link href="./includes/css/login.css" rel="stylesheet">{% endblock %}
+
+{% block basecontent %}
+    <div class="container">
+        <form class="form-signin" method="post" action="./login">
+            <h2 class="form-signin-heading">Cresco Agent Management Login</h2>
+{% if error != null %}
+                <div>
+                    <span style="color: red;">{{ error }}</span>
+                </div>
+{% endif %}
+            <input name="redirect" type="hidden" value="{{ redirect }}" />
+            <label for="username" class="sr-only">Username</label>
+            <input type="text" id="username" name="username" class="form-control" placeholder="Username" required autofocus>
+            <label for="password" class="sr-only">Password</label>
+            <input type="password" id="password" name="password" class="form-control" placeholder="Password" required>
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" name="rememberMe"> Remember Me
+                </label>
+            </div>
+            <button class="btn btn-lg btn-primary btn-block" type="submit">Sign In</button>
+        </form>
+    </div>
+{% endblock %}
