@@ -2,7 +2,8 @@ package com.researchworx.cresco.dashboard.filters;
 
 import com.researchworx.cresco.dashboard.Plugin;
 import com.researchworx.cresco.dashboard.controllers.RootController;
-import com.researchworx.cresco.dashboard.services.UserSessionService;
+import com.researchworx.cresco.dashboard.models.LoginSession;
+import com.researchworx.cresco.dashboard.services.LoginSessionService;
 import com.researchworx.cresco.library.utilities.CLogger;
 
 import javax.annotation.security.PermitAll;
@@ -18,7 +19,6 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Calendar;
-import java.util.Date;
 
 @Provider
 public class AuthenticationFilter implements ContainerRequestFilter {
@@ -66,18 +66,18 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                 requestContext.abortWith(toLogin(redirectCookie));
                 return;
             }
-            String user = UserSessionService.getUser(sessionCookie.getValue());
-            if (user == null) {
+            LoginSession loginSession = LoginSessionService.getByID(sessionCookie.getValue());
+            if (loginSession == null) {
                 requestContext.abortWith(REDIRECT_LOGOUT);
                 return;
             }
             Calendar timeout = Calendar.getInstance();
             timeout.add(Calendar.MINUTE, -1 * TIMEOUT_IN_MINUTES);
-            if (new Date(UserSessionService.getLastSeen(sessionCookie.getValue())).before(timeout.getTime()) && !UserSessionService.getRememberMe(sessionCookie.getValue())) {
+            if (loginSession.getLastSeenAsDate().before(timeout.getTime()) && !loginSession.getRemememberMe()) {
                 requestContext.abortWith(REDIRECT_LOGOUT);
                 return;
             }
-            UserSessionService.seen(sessionCookie.getValue());
+            LoginSessionService.seen(loginSession);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -1,8 +1,11 @@
 package com.researchworx.cresco.dashboard;
 
 import com.google.auto.service.AutoService;
+import com.researchworx.cresco.dashboard.controllers.AlertsController;
 import com.researchworx.cresco.dashboard.controllers.RootController;
 import com.researchworx.cresco.dashboard.filters.AuthenticationFilter;
+import com.researchworx.cresco.dashboard.filters.NotFoundExceptionHandler;
+import com.researchworx.cresco.dashboard.utilities.SessionFactoryManager;
 import com.researchworx.cresco.library.plugin.core.CPlugin;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpHandler;
@@ -10,6 +13,7 @@ import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.logging.ConsoleHandler;
@@ -27,6 +31,7 @@ public class Plugin extends CPlugin {
 
     @Override
     public void cleanUp() {
+        SessionFactoryManager.close();
         server.shutdownNow();
         logger.info("Server down");
     }
@@ -40,15 +45,40 @@ public class Plugin extends CPlugin {
         Logger.getLogger("").addHandler(new ConsoleHandler() {{ setOutputStream(nullOutputStream); }});
         final ResourceConfig rc = new ResourceConfig()
                 .register(AuthenticationFilter.class)
+                .register(NotFoundExceptionHandler.class)
                 .register(RootController.class)
+                .register(AlertsController.class)
                 ;
 
         AuthenticationFilter.connectPlugin(this);
         RootController.connectPlugin(this);
+        AlertsController.connectPlugin(this);
 
         HttpServer server =  GrizzlyHttpServerFactory.createHttpServer(URI.create(baseURI), rc);
         HttpHandler handler = new CLStaticHttpHandler(Plugin.class.getClassLoader(), "includes/");
         server.getServerConfiguration().addHttpHandler(handler, "/includes");
         return server;
+    }
+
+    public static void main(String[] args) throws IOException {
+        final String BASE_URI = "http://[::]:3445/";
+        final OutputStream nullOutputStream = new OutputStream() { @Override public void write(int b) { } };
+        Logger.getLogger("").addHandler(new ConsoleHandler() {{ setOutputStream(nullOutputStream); }});
+        final ResourceConfig rc = new ResourceConfig()
+                .register(AuthenticationFilter.class)
+                .register(NotFoundExceptionHandler.class)
+                .register(RootController.class)
+                .register(AlertsController.class)
+                ;
+
+        HttpServer server =  GrizzlyHttpServerFactory.createHttpServer(URI.create(BASE_URI), rc);
+        HttpHandler handler = new CLStaticHttpHandler(Plugin.class.getClassLoader(), "includes/");
+        server.getServerConfiguration().addHttpHandler(handler, "/includes");
+
+        System.out.println(String.format("Jersey app started with WADL available at "
+                + "%sapplication.wadl\nHit enter to stop it...", BASE_URI));
+        System.in.read();
+        SessionFactoryManager.close();
+        server.shutdownNow();
     }
 }

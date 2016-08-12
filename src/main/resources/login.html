@@ -2,28 +2,35 @@
 
 {% block title %}Login{% endblock %}
 
-{% block css %}<link href="./includes/css/login.css" rel="stylesheet">{% endblock %}
-
 {% block basecontent %}
-    <div class="container">
-        <form class="form-signin" method="post" action="./login">
-            <h2 class="form-signin-heading">Cresco Agent Management Login</h2>
+    <div class="auth">
+        <div class="auth-container">
+            <div class="card">
+                <header class="auth-header">
+                    <h1 class="auth-title"><img src="includes/assets/logo.png" />Cresco Agent Management</h1>
+                </header>
+                <div class="auth-content">
+                    <p class="text-xs-center">LOGIN TO CONTINUE</p>
 {% if error != null %}
-                <div>
-                    <span style="color: red;">{{ error }}</span>
-                </div>
+                    <div style="text-align: center;">
+                        <span style="color: red;">{{ error }}</span>
+                    </div>
 {% endif %}
-            <input name="redirect" type="hidden" value="{{ redirect }}" />
-            <label for="username" class="sr-only">Username</label>
-            <input type="text" id="username" name="username" class="form-control" placeholder="Username" required autofocus>
-            <label for="password" class="sr-only">Password</label>
-            <input type="password" id="password" name="password" class="form-control" placeholder="Password" required>
-            <div class="checkbox">
-                <label>
-                    <input type="checkbox" name="rememberMe"> Remember Me
-                </label>
+                    <form id="login-form" action="./login" method="POST">
+                        <input name="redirect" type="hidden" value="{{ redirect }}" />
+                        <div class="form-group"> <label for="username">Username</label> <input type="text" class="form-control underlined" name="username" id="username" placeholder="Your username" required autofocus> </div>
+                        <div class="form-group"> <label for="password">Password</label> <input type="password" class="form-control underlined" name="password" id="password" placeholder="Your password" required> </div>
+                        <div class="form-group">
+                            <label for="rememberMe">
+                                <input class="checkbox" id="rememberMe" name="rememberMe" type="checkbox">
+                                <span>Remember me</span>
+                            </label>
+                            <!--<a href="./reset" class="forgot-btn pull-right">Forgot password?</a>-->
+                        </div>
+                        <div class="form-group"> <button type="submit" class="btn btn-block btn-primary">Login</button> </div>
+                    </form>
+                </div>
             </div>
-            <button class="btn btn-lg btn-primary btn-block" type="submit">Sign In</button>
-        </form>
+        </div>
     </div>
 {% endblock %}

@@ -5,7 +5,9 @@ import com.mitchellbosecke.pebble.error.PebbleException;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import com.researchworx.cresco.dashboard.Plugin;
 import com.researchworx.cresco.dashboard.filters.AuthenticationFilter;
-import com.researchworx.cresco.dashboard.services.UserSessionService;
+import com.researchworx.cresco.dashboard.models.LoginSession;
+import com.researchworx.cresco.dashboard.services.AlertService;
+import com.researchworx.cresco.dashboard.services.LoginSessionService;
 import com.researchworx.cresco.library.utilities.CLogger;
 
 import javax.annotation.security.PermitAll;
@@ -14,18 +16,18 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Path("/")
 public class RootController {
-    private static Plugin plugin;
-    private static CLogger logger;
+    private static Plugin plugin = null;
+    private static CLogger logger = null;
     private static final String LOGIN_ERROR_COOKIE_NAME = "crescoAgentLoginError";
     public static final String LOGIN_REDIRECT_COOKIE_NAME = "crescoAgentLoginRedirect";
 
@@ -36,28 +38,27 @@ public class RootController {
 
     @GET
     @Produces(MediaType.TEXT_HTML)
-    public String index(@CookieParam(AuthenticationFilter.SESSION_COOKIE_NAME) String sessionID) {
+    public Response index(@CookieParam(AuthenticationFilter.SESSION_COOKIE_NAME) String sessionID) {
         try {
-            String username = UserSessionService.getUser(sessionID);
+            LoginSession loginSession = LoginSessionService.getByID(sessionID);
             PebbleEngine engine = new PebbleEngine.Builder().build();
             PebbleTemplate compiledTemplate = engine.getTemplate("index.html");
 
             Map<String, Object> context = new HashMap<>();
-            context.put("user", username);
+            context.put("user", loginSession.getUsername());
+            context.put("section", "root");
+            context.put("page", "index");
 
             Writer writer = new StringWriter();
             compiledTemplate.evaluate(writer, context);
 
-            return writer.toString();
+            return Response.ok(writer.toString()).build();
         } catch (PebbleException e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            return "PebbleException: " + e.getMessage() + "\n" + sw.toString();
+            return Response.ok("PebbleException: " + e.getMessage()).build();
         } catch (IOException e) {
-            return "IOException: " + e.getMessage();
+            return Response.ok("IOException: " + e.getMessage()).build();
         } catch (Exception e) {
-            return "Server error: " + e.getMessage();
+            return Response.ok("Server error: " + e.getMessage()).build();
         }
     }
 
@@ -104,13 +105,22 @@ public class RootController {
                               @FormParam("rememberMe") Boolean rememberMe,
                               @FormParam("redirect") String redirect) {
         try {
-            if (username == null || username.equals("") || !username.toLowerCase().trim().equals(plugin.getConfig().getStringParam("username", "admin").toLowerCase().trim()) ||
-                    password == null || password.equals("") || !password.toLowerCase().trim().equals(plugin.getConfig().getStringParam("password", "cresco").toLowerCase().trim())) {
-                NewCookie errorCookie = new NewCookie(LOGIN_ERROR_COOKIE_NAME, "Invalid Username or Password!", null, null, null, 60 * 60, false);
-                return Response.seeOther(new URI("/login")).cookie(errorCookie).build();
+            if (plugin == null) {
+                if (username == null || username.equals("") || !username.toLowerCase().trim().equals("admin") ||
+                        password == null || password.equals("") || !password.toLowerCase().trim().equals("cresco")) {
+                    NewCookie errorCookie = new NewCookie(LOGIN_ERROR_COOKIE_NAME, "Invalid Username or Password!", null, null, null, 60 * 60, false);
+                    return Response.seeOther(new URI("/login")).cookie(errorCookie).build();
+                }
+            } else {
+                if (username == null || username.equals("") || !username.toLowerCase().trim().equals(plugin.getConfig().getStringParam("username", "admin").toLowerCase().trim()) ||
+                        password == null || password.equals("") || !password.toLowerCase().trim().equals(plugin.getConfig().getStringParam("password", "cresco").toLowerCase().trim())) {
+                    NewCookie errorCookie = new NewCookie(LOGIN_ERROR_COOKIE_NAME, "Invalid Username or Password!", null, null, null, 60 * 60, false);
+                    return Response.seeOther(new URI("/login")).cookie(errorCookie).build();
+                }
             }
+            LoginSession loginSession = LoginSessionService.create(username.trim(), rememberMe != null);
             return Response.seeOther(new URI(redirect))
-                    .cookie(new NewCookie(AuthenticationFilter.SESSION_COOKIE_NAME, UserSessionService.addSession(username.trim(), rememberMe != null), null, null, null, 60 * 60 * 24 * 365 * 10, false))
+                    .cookie(new NewCookie(AuthenticationFilter.SESSION_COOKIE_NAME, loginSession.getId(), null, null, null, 60 * 60 * 24 * 365 * 10, false))
                     .build();
         } catch (URISyntaxException e) {
             return Response.serverError().build();
@@ -122,11 +132,43 @@ public class RootController {
     @Path("logout")
     public Response getLogout(@CookieParam(AuthenticationFilter.SESSION_COOKIE_NAME) String sessionID) {
         try {
-            UserSessionService.removeSession(sessionID);
+            LoginSessionService.delete(sessionID);
             NewCookie deleteSession = new NewCookie(AuthenticationFilter.SESSION_COOKIE_NAME, null, null, null, null, 0, false);
             return Response.seeOther(new URI("/login")).cookie(deleteSession).build();
         } catch (URISyntaxException e) {
             return Response.serverError().build();
+        }
+    }
+
+    @GET
+    @Path("notifications")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response list(@CookieParam(AuthenticationFilter.SESSION_COOKIE_NAME) String sessionID) {
+        try {
+            List<Object[]> alerts = AlertService.notifications();
+            StringBuilder sb = new StringBuilder();
+            sb.append("[");
+            for (Object[] alert : alerts) {
+                sb.append("{\"id\":\"");
+                sb.append(alert[0]);
+                sb.append("\",");
+
+                sb.append("\"created\":");
+                sb.append(alert[1]);
+                sb.append(",");
+
+                sb.append("\"msg\":\"");
+                sb.append(alert[2]);
+                sb.append("\"},");
+            }
+            sb.append("]");
+            if (alerts.size() > 0)
+                sb.deleteCharAt(sb.lastIndexOf(","));
+            return Response.ok(sb.toString(), MediaType.APPLICATION_JSON_TYPE).build();
+        } catch (Exception e) {
+            if (plugin != null)
+                logger.error("list() : {}", e.getMessage());
+            return Response.ok("[]", MediaType.APPLICATION_JSON_TYPE).build();
         }
     }
 }
