@@ -165,6 +165,7 @@
             pluginVersion.html("");
             pluginVersion.prop('disabled', true);
             pluginInfoBlock.css('display', 'none');
+            pluginConfiguration.html("");
             pluginConfiguration.prop('disabled', true);
             $.ajax({
                 url: "http://128.163.217.124:3446/plugins"
@@ -206,7 +207,7 @@
                 $('#newPluginInfoBuild').html(info['build_version']);
                 $('#newPluginInfoUploaded').html(moment(info['uploaded']).utc().format('MMMM D, YYYY HH:mm:ss z'));
                 pluginInfoBlock.css('display', 'block');
-                pluginConfiguration.html("pluginname="+pluginType.val()+"\njarfile="+pluginPath+pluginType.val()+"-"+pluginVersion.val()+".jar");
+                pluginConfiguration.html("pluginname="+pluginType.val());
                 pluginConfiguration.prop('disabled', false);
             } else {
                 pluginInfoBlock.css('display', 'none');
@@ -219,11 +220,7 @@
             var config = pluginConfiguration.html().replace(/\n/g, ',');
             var json = "{\"url\":\""+url+"\",\"config\":\""+config+"\"}";
             $.ajax({
-                type: 'POST',
-                url: '/plugins/add',
-                data: json,
-                dataType: "json",
-                contentType: "application/json; charset=utf-8"
+                url: '/plugins/add/' + json,
             }).complete(function(data) {
                 console.log(data);
             }).error(function(data) {

@@ -1,11 +1,13 @@
 package com.researchworx.cresco.dashboard.controllers;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.mitchellbosecke.pebble.PebbleEngine;
 import com.mitchellbosecke.pebble.error.PebbleException;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import com.researchworx.cresco.dashboard.Plugin;
 import com.researchworx.cresco.dashboard.filters.AuthenticationFilter;
-import com.researchworx.cresco.dashboard.helpers.NewPlugin;
 import com.researchworx.cresco.dashboard.models.LoginSession;
 import com.researchworx.cresco.dashboard.services.LoginSessionService;
 import com.researchworx.cresco.library.messaging.MsgEvent;
@@ -103,12 +105,35 @@ public class PluginsController {
         }
     }
 
-    @POST
-    @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("add")
-    public Response add(NewPlugin newPlugin) {
-        logger.info("url: {}, config: {}", newPlugin.url, newPlugin.config);
-        return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+    @Path("add/{json:.*}")
+    public Response add(@PathParam("json") String json) {
+        JsonElement jElement = new JsonParser().parse(json);
+        JsonObject jObject = jElement.getAsJsonObject();
+        if (plugin == null)
+            return Response.ok("{\"error\":true,\"message\":\"No communication channel open to Cresco Agent.\"}", MediaType.APPLICATION_JSON_TYPE).build();
+        logger.info("url: {}, config: {}", jObject.get("url").getAsString(), jObject.get("config").getAsString());
+        MsgEvent addPlugin = new MsgEvent(MsgEvent.Type.CONFIG, plugin.getRegion(), plugin.getAgent(), plugin.getPluginID(), "Issuing command to add new plugin to agent");
+        addPlugin.setParam("src_region", plugin.getRegion());
+        addPlugin.setParam("src_agent", plugin.getAgent());
+        addPlugin.setParam("src_plugin", plugin.getPluginID());
+        addPlugin.setParam("dst_region", plugin.getRegion());
+        addPlugin.setParam("dst_agent", plugin.getAgent());
+        addPlugin.setParam("configtype", "pluginadd");
+        addPlugin.setParam("pluginurl", jObject.get("url").getAsString());
+        addPlugin.setParam("configparams", jObject.get("config").getAsString());
+        MsgEvent ret = plugin.sendRPC(addPlugin);
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        for (Map.Entry<String, String> param : ret.getParams().entrySet()) {
+            sb.append("\"");
+            sb.append(param.getKey());
+            sb.append("\":\"");
+            sb.append(param.getValue());
+            sb.append("\",");
+        }
+        sb.append("\"error\":false}");
+        return Response.ok(sb.toString(), MediaType.APPLICATION_JSON_TYPE).build();
     }
 }
