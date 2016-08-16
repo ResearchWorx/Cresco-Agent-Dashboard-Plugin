@@ -1,7 +1,9 @@
 package com.researchworx.cresco.dashboard;
 
 import com.google.auto.service.AutoService;
+import com.researchworx.cresco.dashboard.controllers.AgentsController;
 import com.researchworx.cresco.dashboard.controllers.AlertsController;
+import com.researchworx.cresco.dashboard.controllers.PluginsController;
 import com.researchworx.cresco.dashboard.controllers.RootController;
 import com.researchworx.cresco.dashboard.filters.AuthenticationFilter;
 import com.researchworx.cresco.dashboard.filters.NotFoundExceptionHandler;
@@ -48,11 +50,15 @@ public class Plugin extends CPlugin {
                 .register(NotFoundExceptionHandler.class)
                 .register(RootController.class)
                 .register(AlertsController.class)
+                .register(AgentsController.class)
+                .register(PluginsController.class)
                 ;
 
         AuthenticationFilter.connectPlugin(this);
         RootController.connectPlugin(this);
         AlertsController.connectPlugin(this);
+        AgentsController.connectPlugin(this);
+        PluginsController.connectPlugin(this);
 
         HttpServer server =  GrizzlyHttpServerFactory.createHttpServer(URI.create(baseURI), rc);
         HttpHandler handler = new CLStaticHttpHandler(Plugin.class.getClassLoader(), "includes/");
@@ -69,6 +75,8 @@ public class Plugin extends CPlugin {
                 .register(NotFoundExceptionHandler.class)
                 .register(RootController.class)
                 .register(AlertsController.class)
+                .register(AgentsController.class)
+                .register(PluginsController.class)
                 ;
 
         HttpServer server =  GrizzlyHttpServerFactory.createHttpServer(URI.create(BASE_URI), rc);

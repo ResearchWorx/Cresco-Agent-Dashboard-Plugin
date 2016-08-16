@@ -13,6 +13,8 @@ import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.HashMap;
+import java.util.Map;
 
 @Provider
 public class NotFoundExceptionHandler implements ExceptionMapper<NotFoundException> {
@@ -22,9 +24,12 @@ public class NotFoundExceptionHandler implements ExceptionMapper<NotFoundExcepti
     public Response toResponse(NotFoundException ex) {
         try {
             PebbleEngine engine = new PebbleEngine.Builder().build();
-            PebbleTemplate compiledTemplate = engine.getTemplate("404.html");
+            PebbleTemplate compiledTemplate = engine.getTemplate("error.html");
+            Map<String, Object> context = new HashMap<>();
+            context.put("errorNo", "404");
+            context.put("errorMsg", "Sorry, the page was not found");
             Writer writer = new StringWriter();
-            compiledTemplate.evaluate(writer);
+            compiledTemplate.evaluate(writer, context);
             return Response.status(404).entity(writer.toString()).build();
         } catch (PebbleException e) {
             return Response.ok("PebbleException: " + e.getMessage()).build();

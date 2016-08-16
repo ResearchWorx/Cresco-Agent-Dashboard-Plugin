@@ -6,15 +6,13 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 
-import java.io.File;
-
 public class SessionFactoryManager {
     private static SessionFactory factory;
 
     private static boolean buildSession() {
         final StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
                 .configure()
-                .loadProperties(new File("db.properties"))
+                .loadProperties("db.properties")
                 .build();
         try {
             factory = new MetadataSources( registry ).buildMetadata().buildSessionFactory();

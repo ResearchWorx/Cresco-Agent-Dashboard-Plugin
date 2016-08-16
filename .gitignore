@@ -3,4 +3,3 @@
 *.ini
 *.db
 /target
-db.properties
