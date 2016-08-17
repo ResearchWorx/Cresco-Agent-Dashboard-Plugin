@@ -97,7 +97,7 @@ public class PluginsController {
     @Produces(MediaType.APPLICATION_JSON)
     public Response repo() {
         try {
-            return Response.ok(new Scanner(new URL("http://128.163.217.124:3446/plugins").openStream(), "UTF-8").useDelimiter("\\A").next(), MediaType.APPLICATION_JSON_TYPE).build();
+            return Response.ok(new Scanner(new URL(plugin.getConfig().getStringParam("plugin_repository_url", "http://128.163.217.124:3446/plugins")).openStream(), "UTF-8").useDelimiter("\\A").next(), MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             if (plugin != null)
                 logger.error("repo() : {}", e.getMessage());
@@ -123,7 +123,7 @@ public class PluginsController {
         addPlugin.setParam("configtype", "pluginadd");
         addPlugin.setParam("pluginurl", jObject.get("url").getAsString());
         addPlugin.setParam("configparams", jObject.get("config").getAsString());
-        MsgEvent ret = plugin.sendRPC(addPlugin);
+        /*MsgEvent ret = plugin.sendRPC(addPlugin);
         StringBuilder sb = new StringBuilder();
         sb.append("{");
         for (Map.Entry<String, String> param : ret.getParams().entrySet()) {
@@ -133,7 +133,7 @@ public class PluginsController {
             sb.append(param.getValue());
             sb.append("\",");
         }
-        sb.append("\"error\":false}");
-        return Response.ok(sb.toString(), MediaType.APPLICATION_JSON_TYPE).build();
+        sb.append("\"error\":false}");*/
+        return Response.ok(/*sb.toString()*/"{}", MediaType.APPLICATION_JSON_TYPE).build();
     }
 }
