@@ -9,17 +9,22 @@
 {% block pagecontent %}
                 <div class="row">
                     <div class="col-xs-4">
-                        <select id="regions" name="regions"></select>
+                        <select class="form-control" id="regions" name="regions"></select>
                         <label for="regions">Region</label>
                     </div>
                 </div>
-                <div class="row">
+                <div id='agents-row' class="row" style="display: none;">
                     <div class="col-xs-4">
-                        <select id="agents" name="agents" disabled></select>
+                        <select class="form-control" id="agents" name="agents" disabled></select>
                         <label for="agents">Agent</label>
                     </div>
                 </div>
-                <div id='plugins-row' class="row"  style='display: none;'>
+                <div class="row">
+                    <div class="col-xs-12">
+                        &nbsp;
+                    </div>
+                </div>
+                <div id='plugins-row' class="row" style="display: none;">
                     <div class="col-xs-12">
                         <table id='plugins' class='table table-bordered table-striped' cellspacing="0" width='100%'>
                             <thead>
@@ -47,6 +52,7 @@
     <script type="text/javascript" src="/includes/js/datatables.min.js"></script>
     <script type="text/javascript">
         var regions = $('#regions');
+        var agents_row = $('#agents-row');
         var agents = $('#agents');
         var plugins_row = $('#plugins-row');
         var plugins = $('#plugins');
@@ -71,7 +77,9 @@
                     return;
                 }
                 if (region === '') {
+                    agents.val("blank");
                     agents.prop('disabled', true);
+                    agents_row.css('display', 'none');
                     $.ajax({
                         url: "/plugins/list/"
                     }).complete(function(data) {
@@ -114,12 +122,13 @@
                     url: "/agents/list/" + region
                 }).complete(function(data) {
                     var json = data['responseJSON'];
-                    var options = '<option value="blank" selected></option><option value="">All</option>';
+                    var options = '<option value="">All</option>';
                     $.each(json.agents, function(i, v) {
                         options += '<option value"' + v.name + '">' + v.name + '</option>';
                     });
                     agents.html(options);
                     agents.prop('disabled', false);
+                    agents_row.css('display', 'block');
                 }).error(function(data) {
                     console.error(data);
                 });

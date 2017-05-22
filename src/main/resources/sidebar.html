@@ -27,29 +27,6 @@
 {% endif %}
                                     <a href="/plugins"><i class="fa fa-plug"></i> Plugins</a>
                                 </li>
-{% if section == "alerts" %}
-                                <li class="active open">
-{% else %}
-                                <li>
-{% endif %}
-                                    <a href=""><i class="fa fa-bell"></i> Alerts <i class="fa arrow"></i></a>
-                                    <ul>
-{% if section == "alerts" and page == "index" %}
-                                        <li class="active">
-{% else %}
-                                        <li>
-{% endif %}
-                                            <a href="/alerts">All alerts</a>
-                                        </li>
-{% if section == "alerts" and page == "repository" %}
-                                        <li class="active">
-{% else %}
-                                        <li>
-{% endif %}
-                                            <a href="/alerts/logs">Logs</a>
-                                        </li>
-                                    </ul>
-                                </li>
                             </ul>
                         </nav>
                     </div>
