@@ -7,16 +7,17 @@ import com.researchworx.cresco.dashboard.Plugin;
 import com.researchworx.cresco.dashboard.filters.AuthenticationFilter;
 import com.researchworx.cresco.dashboard.models.LoginSession;
 import com.researchworx.cresco.dashboard.services.LoginSessionService;
+import com.researchworx.cresco.library.messaging.MsgEvent;
 import com.researchworx.cresco.library.utilities.CLogger;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
+import javax.xml.bind.DatatypeConverter;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
 
 @Path("agents")
 public class AgentsController {
@@ -63,19 +64,20 @@ public class AgentsController {
         try {
             if (plugin == null)
                 return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
-            return Response.ok("{\"agents\":[{\"name\":\"agent_something\",\"region\":\"region_something\",\"plugins\":12},{\"name\":\"agent_other\",\"region\":\"region_other\",\"plugins\":10}]}", MediaType.APPLICATION_JSON_TYPE).build();
-            /*MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+            //return Response.ok("{\"agents\":[{\"name\":\"agent_something\",\"region\":\"region_something\",\"plugins\":12},{\"name\":\"agent_other\",\"region\":\"region_other\",\"plugins\":10}]}", MediaType.APPLICATION_JSON_TYPE).build();
+            MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
                     plugin.getPluginID(), "Agent List Request");
             request.setParam("src_region", plugin.getRegion());
             request.setParam("src_agent", plugin.getAgent());
             request.setParam("src_plugin", plugin.getPluginID());
             request.setParam("dst_region", plugin.getRegion());
+            request.setParam("globalcmd", "true");
             request.setParam("action", "listagents");
             MsgEvent response = plugin.sendRPC(request);
-            String regions = "[]";
-            if (response.getParam("agentlist") != null)
-                regions = response.getParam("regionslist");
-            return Response.ok(regions, MediaType.APPLICATION_JSON_TYPE).build();*/
+            String agents = "[]";
+            if (response.getParam("agentslist") != null)
+                agents = getCompressedParam(response.getParam("agentslist"));
+            return Response.ok(agents, MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             if (plugin != null)
                 logger.error("list() : {}", e.getMessage());
@@ -90,31 +92,65 @@ public class AgentsController {
         try {
             if (plugin == null)
                 return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
-            switch (region) {
+            /*switch (region) {
                 case "region_something":
                     return Response.ok("{\"agents\":[{\"name\":\"agent_something\",\"region\":\"region_something\",\"plugins\":12}]}", MediaType.APPLICATION_JSON_TYPE).build();
                 case "region_other":
                     return Response.ok("{\"agents\":[{\"name\":\"agent_other\",\"region\":\"region_other\",\"plugins\":10}]}", MediaType.APPLICATION_JSON_TYPE).build();
                 default:
                     return Response.ok("{\"agents\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
-            }
-            /*MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+            };*/
+            MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
                     plugin.getPluginID(), "Agent List Request");
             request.setParam("src_region", plugin.getRegion());
             request.setParam("src_agent", plugin.getAgent());
             request.setParam("src_plugin", plugin.getPluginID());
             request.setParam("dst_region", plugin.getRegion());
+            request.setParam("globalcmd", "true");
             request.setParam("action", "listagents");
             request.setParam("action_region", region);
             MsgEvent response = plugin.sendRPC(request);
-            String regions = "[]";
-            if (response.getParam("agentlist") != null)
-                regions = response.getParam("regionslist");
-            return Response.ok(regions, MediaType.APPLICATION_JSON_TYPE).build();*/
+            String agents = "[]";
+            if (response.getParam("agentslist") != null)
+                agents = getCompressedParam(response.getParam("agentslist"));
+            return Response.ok(agents, MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             if (plugin != null)
                 logger.error("list() : {}", e.getMessage());
             return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
         }
+    }
+
+    private static String getCompressedParam(String param) {
+        try {
+            byte[] exportDataRawCompressed = DatatypeConverter.parseBase64Binary(param);
+            InputStream iss = new ByteArrayInputStream(exportDataRawCompressed);
+            InputStream is = new GZIPInputStream(iss);
+            return getStringFromInputStream(is);
+        } catch (IOException e) {
+            return "";
+        }
+    }
+
+    private static String getStringFromInputStream(InputStream is) {
+        BufferedReader br = null;
+        StringBuilder sb = new StringBuilder();
+        String line;
+        try {
+            br = new BufferedReader(new InputStreamReader(is));
+            while ((line = br.readLine()) != null)
+                sb.append(line);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return sb.toString();
     }
 }

@@ -46,6 +46,23 @@
                         </table>
                     </div>
                 </div>
+                <div class="modal fade" id="plugin-info-modal">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                    <span class="sr-only">Close</span>
+                                </button>
+                                <h4 class="modal-title" id="plugin-info-modal-title"></h4>
+                            </div>
+                            <div class="modal-body" id="plugin-info-modal-body"></div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 {% endblock %}
 
 {% block pagejs %}
@@ -57,6 +74,22 @@
         var plugins_row = $('#plugins-row');
         var plugins = $('#plugins');
         var plugins_body = $('#plugins tbody');
+        var plugin_info_modal = $('#plugin-info-modal');
+        var plugin_info_modal_title = $('#plugin-info-modal-title');
+        var plugin_info_modal_body = $('#plugin-info-modal-body');
+        function plugininfo(region, agent, plugin) {
+            $.ajax({
+                url: "/plugins/info/" + region + "/" + agent + "/" + plugin
+            }).complete(function(data) {
+                console.log(data);
+                var json = data['responseJSON'];
+                plugin_info_modal_title.html(region + "<br>" + agent + "<br>" + plugin);
+                plugin_info_modal_body.html('<pre>' + syntaxHighlight(JSON.stringify(json, undefined, 4)) + '</pre>');
+                plugin_info_modal.modal('show');
+            }).error(function(data) {
+                console.error(data);
+            });
+        }
         $(function() {
             $.ajax({
                 url: "/regions/list/"
@@ -87,7 +120,7 @@
                         var body = '';
                         $.each(json.plugins, function(i, v) {
                             body += '<tr>';
-                            body += '<td>' + v.name + '</td>';
+                            body += '<td><a style="cursor: pointer" onclick="plugininfo(\'' + v.region + '\',\'' + v.agent + '\',\'' + v.name + '\');">' + v.name + '</a></td>';
                             body += '<td>' + v.region + '</td>';
                             body += '<td>' + v.agent + '</td>';
                             body += '</tr>';
@@ -107,7 +140,7 @@
                     var body = '';
                     $.each(json.plugins, function(i, v) {
                         body += '<tr>';
-                        body += '<td>' + v.name + '</td>';
+                        body += '<td><a style="cursor: pointer" onclick="plugininfo(\'' + v.region + '\',\'' + v.agent + '\',\'' + v.name + '\');">' + v.name + '</a></td>';
                         body += '<td>' + v.region + '</td>';
                         body += '<td>' + v.agent + '</td>';
                         body += '</tr>';
@@ -149,7 +182,7 @@
                     var body = '';
                     $.each(json.plugins, function(i, v) {
                     body += '<tr>';
-                        body += '<td>' + v.name + '</td>';
+                        body += '<td><a style="cursor: pointer" onclick="plugininfo(\'' + v.region + '\',\'' + v.agent + '\',\'' + v.name + '\');">' + v.name + '</a></td>';
                         body += '<td>' + v.region + '</td>';
                         body += '<td>' + v.agent + '</td>';
                         body += '</tr>';
@@ -162,5 +195,23 @@
                 });
             })
         });
+        function syntaxHighlight(json) {
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                var cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
     </script>
 {% endblock %}

@@ -16,13 +16,13 @@ import com.researchworx.cresco.library.utilities.CLogger;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
+import javax.xml.bind.DatatypeConverter;
+import java.io.*;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.zip.GZIPInputStream;
 
 @Path("plugins")
 public class PluginsController {
@@ -31,7 +31,8 @@ public class PluginsController {
 
     public static void connectPlugin(Plugin inPlugin) {
         plugin = inPlugin;
-        logger = new CLogger(PluginsController.class, plugin.getMsgOutQueue(), plugin.getRegion(), plugin.getAgent(), plugin.getPluginID(), CLogger.Level.Trace);
+        logger = new CLogger(PluginsController.class, plugin.getMsgOutQueue(), plugin.getRegion(), plugin.getAgent(),
+                plugin.getPluginID(), CLogger.Level.Trace);
     }
 
     @GET
@@ -68,25 +69,59 @@ public class PluginsController {
     }
 
     @GET
+    @Path("info/{region}/{agent}/{plugin:.*}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response byId(@PathParam("region") String region,
+                         @PathParam("agent") String agent,
+                         @PathParam("plugin") String pluginID) {
+        try {
+            if (plugin == null)
+                return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+            MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+                    plugin.getPluginID(), "Agent List Request");
+            request.setParam("src_region", plugin.getRegion());
+            request.setParam("src_agent", plugin.getAgent());
+            request.setParam("src_plugin", plugin.getPluginID());
+            request.setParam("dst_region", plugin.getRegion());
+            request.setParam("globalcmd", "true");
+            request.setParam("action", "plugininfo");
+            request.setParam("action_region", region);
+            request.setParam("action_agent", agent);
+            request.setParam("action_plugin", pluginID);
+            MsgEvent response = plugin.sendRPC(request);
+            String info = "{}";
+            if (response.getParam("pluginslist") != null)
+                info = getCompressedParam(response.getParam("pluginslist"));
+            return Response.ok(info, MediaType.APPLICATION_JSON_TYPE).build();
+        } catch (Exception e) {
+            if (plugin != null)
+                logger.error("byId() : {}", e.getMessage());
+            return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+        }
+    }
+
+    @GET
     @Path("list")
     @Produces(MediaType.APPLICATION_JSON)
     public Response list() {
         try {
             if (plugin == null)
                 return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
-            return Response.ok("{\"plugins\":[{\"name\":\"plugin_something\",\"region\":\"region_something\",\"agent\":\"agent_something\"},{\"name\":\"plugin_something_2\",\"region\":\"region_something\",\"agent\":\"agent_something_2\"},{\"name\":\"plugin_other\",\"region\":\"region_other\",\"agent\":\"agent_other\"},{\"name\":\"plugin_other_2\",\"region\":\"region_other\",\"agent\":\"agent_other_2\"}]}", MediaType.APPLICATION_JSON_TYPE).build();
-            /*MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+            //return Response.ok("{\"plugins\":[{\"name\":\"plugin_something\",\"region\":\"region_something\",\"agent\":\"agent_something\"},{\"name\":\"plugin_something_2\",\"region\":\"region_something\",\"agent\":\"agent_something_2\"},{\"name\":\"plugin_other\",\"region\":\"region_other\",\"agent\":\"agent_other\"},{\"name\":\"plugin_other_2\",\"region\":\"region_other\",\"agent\":\"agent_other_2\"}]}", MediaType.APPLICATION_JSON_TYPE).build();
+            MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
                     plugin.getPluginID(), "Agent List Request");
             request.setParam("src_region", plugin.getRegion());
             request.setParam("src_agent", plugin.getAgent());
             request.setParam("src_plugin", plugin.getPluginID());
             request.setParam("dst_region", plugin.getRegion());
-            request.setParam("action", "listagents");
+            request.setParam("globalcmd", "true");
+            request.setParam("action", "listplugins");
             MsgEvent response = plugin.sendRPC(request);
-            String regions = "[]";
-            if (response.getParam("agentlist") != null)
-                regions = response.getParam("regionslist");
-            return Response.ok(regions, MediaType.APPLICATION_JSON_TYPE).build();*/
+            logger.debug("Response: {}", response.getParams());
+            String plugins = "[]";
+            if (response.getParam("pluginslist") != null)
+                plugins = getCompressedParam(response.getParam("pluginslist"));
+            return Response.ok(plugins, MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             if (plugin != null)
                 logger.error("list() : {}", e.getMessage());
@@ -101,27 +136,28 @@ public class PluginsController {
         try {
             if (plugin == null)
                 return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
-            switch (region) {
+            /*switch (region) {
                 case "region_something":
                     return Response.ok("{\"plugins\":[{\"name\":\"plugin_something\",\"region\":\"region_something\",\"agent\":\"agent_something\"},{\"name\":\"plugin_something_2\",\"region\":\"region_something\",\"agent\":\"agent_something_2\"}]}", MediaType.APPLICATION_JSON_TYPE).build();
                 case "region_other":
                     return Response.ok("{\"plugins\":[{\"name\":\"plugin_other\",\"region\":\"region_other\",\"agent\":\"agent_other\"},{\"name\":\"plugin_other_2\",\"region\":\"region_other\",\"agent\":\"agent_other_2\"}]}", MediaType.APPLICATION_JSON_TYPE).build();
                 default:
                     return Response.ok("{\"plugins\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
-            }
-            /*MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+            }*/
+            MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
                     plugin.getPluginID(), "Agent List Request");
             request.setParam("src_region", plugin.getRegion());
             request.setParam("src_agent", plugin.getAgent());
             request.setParam("src_plugin", plugin.getPluginID());
             request.setParam("dst_region", plugin.getRegion());
-            request.setParam("action", "listagents");
+            request.setParam("globalcmd", "true");
+            request.setParam("action", "listplugins");
             request.setParam("action_region", region);
             MsgEvent response = plugin.sendRPC(request);
-            String regions = "[]";
-            if (response.getParam("agentlist") != null)
-                regions = response.getParam("regionslist");
-            return Response.ok(regions, MediaType.APPLICATION_JSON_TYPE).build();*/
+            String plugins = "[]";
+            if (response.getParam("pluginslist") != null)
+                plugins = getCompressedParam(response.getParam("pluginslist"));
+            return Response.ok(plugins, MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             if (plugin != null)
                 logger.error("list() : {}", e.getMessage());
@@ -137,7 +173,7 @@ public class PluginsController {
         try {
             if (plugin == null)
                 return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
-            switch (region) {
+            /*switch (region) {
                 case "region_something":
                     switch (agent) {
                         case "agent_something":
@@ -154,20 +190,22 @@ public class PluginsController {
                     }
                 default:
                     return Response.ok("{\"plugins\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
-            }
-            /*MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+            }*/
+            MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
                     plugin.getPluginID(), "Agent List Request");
             request.setParam("src_region", plugin.getRegion());
             request.setParam("src_agent", plugin.getAgent());
             request.setParam("src_plugin", plugin.getPluginID());
             request.setParam("dst_region", plugin.getRegion());
-            request.setParam("action", "listagents");
+            request.setParam("globalcmd", "true");
+            request.setParam("action", "listplugins");
             request.setParam("action_region", region);
+            request.setParam("action_agent", agent);
             MsgEvent response = plugin.sendRPC(request);
-            String regions = "[]";
-            if (response.getParam("agentlist") != null)
-                regions = response.getParam("regionslist");
-            return Response.ok(regions, MediaType.APPLICATION_JSON_TYPE).build();*/
+            String plugins = "[]";
+            if (response.getParam("pluginslist") != null)
+                plugins = getCompressedParam(response.getParam("pluginslist"));
+            return Response.ok(plugins, MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             if (plugin != null)
                 logger.error("list() : {}", e.getMessage());
@@ -182,7 +220,8 @@ public class PluginsController {
         try {
             if (plugin == null)
                 return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
-            MsgEvent request = new MsgEvent(MsgEvent.Type.CONFIG, plugin.getRegion(), plugin.getAgent(), plugin.getPluginID(), "Plugin Inventory Request");
+            MsgEvent request = new MsgEvent(MsgEvent.Type.CONFIG, plugin.getRegion(), plugin.getAgent(),
+                    plugin.getPluginID(), "Plugin Inventory Request");
             request.setParam("src_region", plugin.getRegion());
             request.setParam("src_agent", plugin.getAgent());
             request.setParam("src_plugin", plugin.getPluginID());
@@ -206,7 +245,9 @@ public class PluginsController {
     @Produces(MediaType.APPLICATION_JSON)
     public Response repo() {
         try {
-            return Response.ok(new Scanner(new URL(plugin.getConfig().getStringParam("plugin_repository_url", "http://128.163.217.124:3446/plugins")).openStream(), "UTF-8").useDelimiter("\\A").next(), MediaType.APPLICATION_JSON_TYPE).build();
+            return Response.ok(new Scanner(new URL(plugin.getConfig().getStringParam("plugin_repository_url",
+                    "http://128.163.217.124:3446/plugins")).openStream(), "UTF-8")
+                    .useDelimiter("\\A").next(), MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             if (plugin != null)
                 logger.error("repo() : {}", e.getMessage());
@@ -221,9 +262,11 @@ public class PluginsController {
         JsonElement jElement = new JsonParser().parse(json);
         JsonObject jObject = jElement.getAsJsonObject();
         if (plugin == null)
-            return Response.ok("{\"error\":true,\"message\":\"No communication channel open to Cresco Agent.\"}", MediaType.APPLICATION_JSON_TYPE).build();
+            return Response.ok("{\"error\":true,\"message\":\"No communication channel open to Cresco Agent.\"}",
+                    MediaType.APPLICATION_JSON_TYPE).build();
         logger.info("url: {}, config: {}", jObject.get("url").getAsString(), jObject.get("config").getAsString());
-        MsgEvent addPlugin = new MsgEvent(MsgEvent.Type.CONFIG, plugin.getRegion(), plugin.getAgent(), plugin.getPluginID(), "Issuing command to add new plugin to agent");
+        MsgEvent addPlugin = new MsgEvent(MsgEvent.Type.CONFIG, plugin.getRegion(), plugin.getAgent(), plugin.getPluginID(),
+                "Issuing command to add new plugin to agent");
         addPlugin.setParam("src_region", plugin.getRegion());
         addPlugin.setParam("src_agent", plugin.getAgent());
         addPlugin.setParam("src_plugin", plugin.getPluginID());
@@ -244,5 +287,38 @@ public class PluginsController {
         }
         sb.append("\"error\":false}");*/
         return Response.ok(/*sb.toString()*/"{}", MediaType.APPLICATION_JSON_TYPE).build();
+    }
+
+    private static String getCompressedParam(String param) {
+        try {
+            byte[] exportDataRawCompressed = DatatypeConverter.parseBase64Binary(param);
+            InputStream iss = new ByteArrayInputStream(exportDataRawCompressed);
+            InputStream is = new GZIPInputStream(iss);
+            return getStringFromInputStream(is);
+        } catch (IOException e) {
+            return "";
+        }
+    }
+
+    private static String getStringFromInputStream(InputStream is) {
+        BufferedReader br = null;
+        StringBuilder sb = new StringBuilder();
+        String line;
+        try {
+            br = new BufferedReader(new InputStreamReader(is));
+            while ((line = br.readLine()) != null)
+                sb.append(line);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return sb.toString();
     }
 }
