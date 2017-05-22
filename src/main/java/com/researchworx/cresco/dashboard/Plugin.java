@@ -1,10 +1,7 @@
 package com.researchworx.cresco.dashboard;
 
 import com.google.auto.service.AutoService;
-import com.researchworx.cresco.dashboard.controllers.AgentsController;
-import com.researchworx.cresco.dashboard.controllers.AlertsController;
-import com.researchworx.cresco.dashboard.controllers.PluginsController;
-import com.researchworx.cresco.dashboard.controllers.RootController;
+import com.researchworx.cresco.dashboard.controllers.*;
 import com.researchworx.cresco.dashboard.filters.AuthenticationFilter;
 import com.researchworx.cresco.dashboard.filters.NotFoundExceptionHandler;
 import com.researchworx.cresco.dashboard.utilities.SessionFactoryManager;
@@ -52,6 +49,7 @@ public class Plugin extends CPlugin {
                 .register(AlertsController.class)
                 .register(AgentsController.class)
                 .register(PluginsController.class)
+                .register(RegionsController.class)
                 ;
 
         AuthenticationFilter.connectPlugin(this);
@@ -59,6 +57,7 @@ public class Plugin extends CPlugin {
         AlertsController.connectPlugin(this);
         AgentsController.connectPlugin(this);
         PluginsController.connectPlugin(this);
+        RegionsController.connectPlugin(this);
 
         HttpServer server =  GrizzlyHttpServerFactory.createHttpServer(URI.create(baseURI), rc);
         HttpHandler handler = new CLStaticHttpHandler(Plugin.class.getClassLoader(), "includes/");
@@ -77,6 +76,7 @@ public class Plugin extends CPlugin {
                 .register(AlertsController.class)
                 .register(AgentsController.class)
                 .register(PluginsController.class)
+                .register(RegionsController.class)
                 ;
 
         HttpServer server =  GrizzlyHttpServerFactory.createHttpServer(URI.create(BASE_URI), rc);

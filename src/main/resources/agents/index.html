@@ -2,6 +2,86 @@
 
 {% block title %}Agents{% endblock %}
 
+{% block pagecss %}
+    <link rel="stylesheet" href="/includes/css/datatables.min.css">
+{% endblock %}
+
 {% block pagecontent %}
-                <h1>Agents page</h1>
+                <div class="row">
+                    <div class="col-xs-4">
+                        <select id="regions" name="regions"></select>
+                        <label for="regions">Region</label>
+                    </div>
+                </div>
+                <div id='agents-row' class="row"  style='display: none;'>
+                    <div class="col-xs-12">
+                        <table id='agents' class='table table-bordered table-striped' cellspacing="0" width='100%'>
+                            <thead>
+                            <tr>
+                                <td>Agent</td>
+                                <td>Region</td>
+                                <td>Plugins</td>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                            <tfoot>
+                            <tr>
+                                <td>Agent</td>
+                                <td>Region</td>
+                                <td>Plugins</td>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+{% endblock %}
+
+{% block pagejs %}
+    <script type="text/javascript" src="/includes/js/datatables.min.js"></script>
+    <script type="text/javascript">
+        var regions = $('#regions');
+        var agents_row = $('#agents-row');
+        var agents = $('#agents');
+        var agents_body = $('#agents tbody');
+        $(function() {
+            $.ajax({
+                url: "/regions/list"
+            }).complete(function(data) {
+                var json = data['responseJSON'];
+                var options = '<option value="blank" selected></option><option value="">All</option>';
+                $.each(json.regions, function(i, v) {
+                    options += '<option value"' + v.name + '">' + v.name + '</option>';
+                });
+                regions.html(options);
+            }).error(function(data) {
+               console.error(data);
+            });
+            regions.change(function() {
+                var region = regions.val();
+                if (region === 'blank') {
+                    agents_row.css('display', 'none');
+                    return;
+                }
+                $.ajax({
+                    url: "/agents/list/" + region
+                }).complete(function(data) {
+                    var json = data['responseJSON'];
+                    var body = '';
+                    $.each(json.agents, function(i, v) {
+                        body += '<tr>';
+                        body += '<td>' + v.name + '</td>';
+                        body += '<td>' + v.region + '</td>';
+                        body += '<td>' + v.plugins + '</td>';
+                        body += '</tr>';
+                    });
+                    agents_body.html(body);
+                    agents.DataTable();
+                    agents_row.css('display', 'block');
+                }).error(function(data) {
+                    console.error(data);
+                });
+            });
+        });
+    </script>
 {% endblock %}

@@ -43,15 +43,16 @@ public class PluginsController {
             PebbleTemplate compiledTemplate = engine.getTemplate("plugins/index.html");
 
             Map<String, Object> context = new HashMap<>();
-            context.put("user", loginSession.getUsername());
+            if (loginSession != null)
+                context.put("user", loginSession.getUsername());
             context.put("section", "plugins");
             context.put("page", "index");
-            if (plugin == null)
+            /*if (plugin == null)
                 context.put("pluginPath", "plugins/");
             else {
                 String jarfile = plugin.getConfig().getStringParam("jarfile");
                 context.put("pluginPath", jarfile.substring(0, jarfile.lastIndexOf('/') + 1));
-            }
+            }*/
 
             Writer writer = new StringWriter();
             compiledTemplate.evaluate(writer, context);
@@ -70,6 +71,114 @@ public class PluginsController {
     @Path("list")
     @Produces(MediaType.APPLICATION_JSON)
     public Response list() {
+        try {
+            if (plugin == null)
+                return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+            return Response.ok("{\"plugins\":[{\"name\":\"plugin_something\",\"region\":\"region_something\",\"agent\":\"agent_something\"},{\"name\":\"plugin_something_2\",\"region\":\"region_something\",\"agent\":\"agent_something_2\"},{\"name\":\"plugin_other\",\"region\":\"region_other\",\"agent\":\"agent_other\"},{\"name\":\"plugin_other_2\",\"region\":\"region_other\",\"agent\":\"agent_other_2\"}]}", MediaType.APPLICATION_JSON_TYPE).build();
+            /*MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+                    plugin.getPluginID(), "Agent List Request");
+            request.setParam("src_region", plugin.getRegion());
+            request.setParam("src_agent", plugin.getAgent());
+            request.setParam("src_plugin", plugin.getPluginID());
+            request.setParam("dst_region", plugin.getRegion());
+            request.setParam("action", "listagents");
+            MsgEvent response = plugin.sendRPC(request);
+            String regions = "[]";
+            if (response.getParam("agentlist") != null)
+                regions = response.getParam("regionslist");
+            return Response.ok(regions, MediaType.APPLICATION_JSON_TYPE).build();*/
+        } catch (Exception e) {
+            if (plugin != null)
+                logger.error("list() : {}", e.getMessage());
+            return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+        }
+    }
+
+    @GET
+    @Path("list/{region}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listByRegion(@PathParam("region") String region) {
+        try {
+            if (plugin == null)
+                return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+            switch (region) {
+                case "region_something":
+                    return Response.ok("{\"plugins\":[{\"name\":\"plugin_something\",\"region\":\"region_something\",\"agent\":\"agent_something\"},{\"name\":\"plugin_something_2\",\"region\":\"region_something\",\"agent\":\"agent_something_2\"}]}", MediaType.APPLICATION_JSON_TYPE).build();
+                case "region_other":
+                    return Response.ok("{\"plugins\":[{\"name\":\"plugin_other\",\"region\":\"region_other\",\"agent\":\"agent_other\"},{\"name\":\"plugin_other_2\",\"region\":\"region_other\",\"agent\":\"agent_other_2\"}]}", MediaType.APPLICATION_JSON_TYPE).build();
+                default:
+                    return Response.ok("{\"plugins\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
+            }
+            /*MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+                    plugin.getPluginID(), "Agent List Request");
+            request.setParam("src_region", plugin.getRegion());
+            request.setParam("src_agent", plugin.getAgent());
+            request.setParam("src_plugin", plugin.getPluginID());
+            request.setParam("dst_region", plugin.getRegion());
+            request.setParam("action", "listagents");
+            request.setParam("action_region", region);
+            MsgEvent response = plugin.sendRPC(request);
+            String regions = "[]";
+            if (response.getParam("agentlist") != null)
+                regions = response.getParam("regionslist");
+            return Response.ok(regions, MediaType.APPLICATION_JSON_TYPE).build();*/
+        } catch (Exception e) {
+            if (plugin != null)
+                logger.error("list() : {}", e.getMessage());
+            return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+        }
+    }
+
+    @GET
+    @Path("list/{region}/{agent}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listByAgent(@PathParam("region") String region,
+                                @PathParam("agent") String agent) {
+        try {
+            if (plugin == null)
+                return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+            switch (region) {
+                case "region_something":
+                    switch (agent) {
+                        case "agent_something":
+                            return Response.ok("{\"plugins\":[{\"name\":\"plugin_something\",\"region\":\"region_something\",\"agent\":\"agent_something\"}]}", MediaType.APPLICATION_JSON_TYPE).build();
+                        case "agent_something_2":
+                            return Response.ok("{\"plugins\":[{\"name\":\"plugin_something_2\",\"region\":\"region_something\",\"agent\":\"agent_something_2\"}]}", MediaType.APPLICATION_JSON_TYPE).build();
+                    }
+                case "region_other":
+                    switch (agent) {
+                        case "agent_other":
+                            return Response.ok("{\"plugins\":[{\"name\":\"plugin_other\",\"region\":\"region_other\",\"agent\":\"agent_other\"}]}", MediaType.APPLICATION_JSON_TYPE).build();
+                        case "agent_other_2":
+                            return Response.ok("{\"plugins\":[{\"name\":\"plugin_other_2\",\"region\":\"region_other\",\"agent\":\"agent_other_2\"}]}", MediaType.APPLICATION_JSON_TYPE).build();
+                    }
+                default:
+                    return Response.ok("{\"plugins\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
+            }
+            /*MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+                    plugin.getPluginID(), "Agent List Request");
+            request.setParam("src_region", plugin.getRegion());
+            request.setParam("src_agent", plugin.getAgent());
+            request.setParam("src_plugin", plugin.getPluginID());
+            request.setParam("dst_region", plugin.getRegion());
+            request.setParam("action", "listagents");
+            request.setParam("action_region", region);
+            MsgEvent response = plugin.sendRPC(request);
+            String regions = "[]";
+            if (response.getParam("agentlist") != null)
+                regions = response.getParam("regionslist");
+            return Response.ok(regions, MediaType.APPLICATION_JSON_TYPE).build();*/
+        } catch (Exception e) {
+            if (plugin != null)
+                logger.error("list() : {}", e.getMessage());
+            return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+        }
+    }
+
+    @GET
+    @Path("local")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response local() {
         try {
             if (plugin == null)
                 return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();

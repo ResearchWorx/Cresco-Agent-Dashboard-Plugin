@@ -1,0 +1,56 @@
+{% extends "page.html" %}
+
+{% block title %}Regions{% endblock %}
+
+{% block pagecss %}
+    <link rel="stylesheet" href="/includes/css/datatables.min.css">
+{% endblock %}
+
+{% block pagecontent %}
+                <div class="row">
+                    <div class="col-xs-12">
+                        <table id='regions' class='table table-bordered table-striped' cellspacing="0" width='100%'>
+                            <thead>
+                                <tr>
+                                    <td>Region</td>
+                                    <td>Agents</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td>Region</td>
+                                    <td>Agents</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+{% endblock %}
+
+{% block pagejs %}
+    <script type="text/javascript" src="/includes/js/datatables.min.js"></script>
+    <script type="text/javascript">
+        var regions = $('#regions');
+        var regions_body = $('#regions tbody');
+        $(function() {
+            $.ajax({
+                url: "/regions/list"
+            }).complete(function(data) {
+                var json = data['responseJSON'];
+                var body = '';
+                $.each(json.regions, function(i, v) {
+                    body += '<tr>';
+                    body += '<td>' + v.name + '</td>';
+                    body += '<td>' + v.agents + '</td>';
+                    body += '</tr>';
+                });
+                regions_body.html(body);
+                regions.DataTable();
+            }).error(function(data) {
+                console.error(data);
+            });
+        });
+    </script>
+{% endblock %}
