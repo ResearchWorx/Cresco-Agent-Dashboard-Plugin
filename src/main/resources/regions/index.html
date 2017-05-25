@@ -27,6 +27,23 @@
                         </table>
                     </div>
                 </div>
+                <div class="modal fade" id="region-info-modal">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                    <span class="sr-only">Close</span>
+                                </button>
+                                <h4 class="modal-title" id="region-info-modal-title"></h4>
+                            </div>
+                            <div class="modal-body" id="region-info-modal-body"></div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 {% endblock %}
 
 {% block pagejs %}
@@ -34,6 +51,9 @@
     <script type="text/javascript">
         var regions = $('#regions');
         var regions_body = $('#regions tbody');
+        var region_info_modal = $('#region-info-modal');
+        var region_info_modal_title = $('#region-info-modal-title');
+        var region_info_modal_body = $('#region-info-modal-body');
         $(function() {
             $.ajax({
                 url: "/regions/list"
@@ -42,7 +62,7 @@
                 var body = '';
                 $.each(json.regions, function(i, v) {
                     body += '<tr>';
-                    body += '<td>' + v.name + '</td>';
+                    body += '<td><a style="cursor: pointer" onclick="resources(\'' + v.name + '\');">' + v.name + '</a></td>';
                     body += '<td>' + v.agents + '</td>';
                     body += '</tr>';
                 });
@@ -52,5 +72,36 @@
                 console.error(data);
             });
         });
+        function resources(region) {
+            $.ajax({
+                url: "/regions/resources/" + region
+            }).complete(function(data) {
+                console.log(data);
+                var json = data['responseJSON'];
+                region_info_modal_title.html("Resources: " + region);
+                region_info_modal_body.html('<pre>' + syntaxHighlight(JSON.stringify(json, undefined, 4)) + '</pre>');
+                region_info_modal.modal('show');
+            }).error(function(data) {
+                console.error(data);
+            });
+        }
+        function syntaxHighlight(json) {
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                var cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
     </script>
 {% endblock %}

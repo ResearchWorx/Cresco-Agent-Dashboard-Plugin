@@ -50,6 +50,7 @@ public class Plugin extends CPlugin {
                 .register(AgentsController.class)
                 .register(PluginsController.class)
                 .register(RegionsController.class)
+                .register(GlobalController.class)
                 ;
 
         AuthenticationFilter.connectPlugin(this);
@@ -58,6 +59,7 @@ public class Plugin extends CPlugin {
         AgentsController.connectPlugin(this);
         PluginsController.connectPlugin(this);
         RegionsController.connectPlugin(this);
+        GlobalController.connectPlugin(this);
 
         HttpServer server =  GrizzlyHttpServerFactory.createHttpServer(URI.create(baseURI), rc);
         HttpHandler handler = new CLStaticHttpHandler(Plugin.class.getClassLoader(), "includes/");
@@ -77,6 +79,7 @@ public class Plugin extends CPlugin {
                 .register(AgentsController.class)
                 .register(PluginsController.class)
                 .register(RegionsController.class)
+                .register(GlobalController.class)
                 ;
 
         HttpServer server =  GrizzlyHttpServerFactory.createHttpServer(URI.create(BASE_URI), rc);

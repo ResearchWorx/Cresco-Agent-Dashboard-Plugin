@@ -10,17 +10,15 @@ import com.researchworx.cresco.dashboard.services.LoginSessionService;
 import com.researchworx.cresco.library.messaging.MsgEvent;
 import com.researchworx.cresco.library.utilities.CLogger;
 
-import javax.ws.rs.CookieParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.xml.bind.DatatypeConverter;
-import java.io.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.zip.GZIPInputStream;
 
 @Path("regions")
 public class RegionsController {
@@ -68,7 +66,6 @@ public class RegionsController {
         try {
             if (plugin == null)
                 return Response.ok("{\"regions\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
-            //return Response.ok("{\"regions\":[{\"name\":\"region_something\",\"agents\":12},{\"name\":\"region_other\",\"agents\":10}]}", MediaType.APPLICATION_JSON_TYPE).build();
             MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
                     plugin.getPluginID(), "Region List Request");
             request.setParam("src_region", plugin.getRegion());
@@ -79,10 +76,10 @@ public class RegionsController {
             request.setParam("action", "listregions");
             MsgEvent response = plugin.sendRPC(request);
             if (response == null)
-                return Response.ok("{\"regions\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}", MediaType.APPLICATION_JSON_TYPE).build();
             String regions = "[]";
             if (response.getParam("regionslist") != null)
-                regions = getCompressedParam(response.getParam("regionslist"));
+                regions = response.getCompressedParam("regionslist");
             return Response.ok(regions, MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
@@ -94,36 +91,37 @@ public class RegionsController {
         }
     }
 
-    private static String getCompressedParam(String param) {
+    @GET
+    @Path("resources/{region}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response resources(@PathParam("region") String region) {
+        logger.trace("Call to resources({})", region);
         try {
-            byte[] exportDataRawCompressed = DatatypeConverter.parseBase64Binary(param);
-            InputStream iss = new ByteArrayInputStream(exportDataRawCompressed);
-            InputStream is = new GZIPInputStream(iss);
-            return getStringFromInputStream(is);
-        } catch (IOException e) {
-            return "";
+            if (plugin == null)
+                return Response.ok("{\"regions\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
+            MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+                    plugin.getPluginID(), "Region List Request");
+            request.setParam("src_region", plugin.getRegion());
+            request.setParam("src_agent", plugin.getAgent());
+            request.setParam("src_plugin", plugin.getPluginID());
+            request.setParam("dst_region", plugin.getRegion());
+            request.setParam("globalcmd", Boolean.TRUE.toString());
+            request.setParam("action", "resourceinfo");
+            request.setParam("action_region", region);
+            MsgEvent response = plugin.sendRPC(request);
+            if (response == null)
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}", MediaType.APPLICATION_JSON_TYPE).build();
+            String regions = "[]";
+            if (response.getParam("resourceinfo") != null)
+                regions = response.getCompressedParam("resourceinfo");
+            return Response.ok(regions, MediaType.APPLICATION_JSON_TYPE).build();
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            if (plugin != null)
+                logger.error("resources({}) : {}", region, sw.toString());
+            return Response.ok("{\"regions\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
         }
-    }
-
-    private static String getStringFromInputStream(InputStream is) {
-        BufferedReader br = null;
-        StringBuilder sb = new StringBuilder();
-        String line;
-        try {
-            br = new BufferedReader(new InputStreamReader(is));
-            while ((line = br.readLine()) != null)
-                sb.append(line);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return sb.toString();
     }
 }

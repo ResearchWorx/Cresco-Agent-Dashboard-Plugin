@@ -13,11 +13,12 @@ import com.researchworx.cresco.library.utilities.CLogger;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.xml.bind.DatatypeConverter;
-import java.io.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.zip.GZIPInputStream;
 
 @Path("agents")
 public class AgentsController {
@@ -26,7 +27,7 @@ public class AgentsController {
 
     public static void connectPlugin(Plugin inPlugin) {
         plugin = inPlugin;
-        logger = new CLogger(PluginsController.class, plugin.getMsgOutQueue(), plugin.getRegion(),
+        logger = new CLogger(AgentsController.class, plugin.getMsgOutQueue(), plugin.getRegion(),
                 plugin.getAgent(), plugin.getPluginID(), CLogger.Level.Trace);
     }
 
@@ -61,10 +62,10 @@ public class AgentsController {
     @Path("list")
     @Produces(MediaType.APPLICATION_JSON)
     public Response list() {
+        logger.trace("Call to list()");
         try {
             if (plugin == null)
                 return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
-            //return Response.ok("{\"agents\":[{\"name\":\"agent_something\",\"region\":\"region_something\",\"plugins\":12},{\"name\":\"agent_other\",\"region\":\"region_other\",\"plugins\":10}]}", MediaType.APPLICATION_JSON_TYPE).build();
             MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
                     plugin.getPluginID(), "Agent List Request");
             request.setParam("src_region", plugin.getRegion());
@@ -74,9 +75,11 @@ public class AgentsController {
             request.setParam("globalcmd", "true");
             request.setParam("action", "listagents");
             MsgEvent response = plugin.sendRPC(request);
+            if (response == null)
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}", MediaType.APPLICATION_JSON_TYPE).build();
             String agents = "[]";
             if (response.getParam("agentslist") != null)
-                agents = getCompressedParam(response.getParam("agentslist"));
+                agents = response.getCompressedParam("agentslist");
             return Response.ok(agents, MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             if (plugin != null)
@@ -89,17 +92,10 @@ public class AgentsController {
     @Path("list/{region}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response listByRegion(@PathParam("region") String region) {
+        logger.trace("Call to listByRegion()");
         try {
             if (plugin == null)
                 return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
-            /*switch (region) {
-                case "region_something":
-                    return Response.ok("{\"agents\":[{\"name\":\"agent_something\",\"region\":\"region_something\",\"plugins\":12}]}", MediaType.APPLICATION_JSON_TYPE).build();
-                case "region_other":
-                    return Response.ok("{\"agents\":[{\"name\":\"agent_other\",\"region\":\"region_other\",\"plugins\":10}]}", MediaType.APPLICATION_JSON_TYPE).build();
-                default:
-                    return Response.ok("{\"agents\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
-            };*/
             MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
                     plugin.getPluginID(), "Agent List Request");
             request.setParam("src_region", plugin.getRegion());
@@ -110,9 +106,11 @@ public class AgentsController {
             request.setParam("action", "listagents");
             request.setParam("action_region", region);
             MsgEvent response = plugin.sendRPC(request);
+            if (response == null)
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}", MediaType.APPLICATION_JSON_TYPE).build();
             String agents = "[]";
             if (response.getParam("agentslist") != null)
-                agents = getCompressedParam(response.getParam("agentslist"));
+                agents = response.getCompressedParam("agentslist");
             return Response.ok(agents, MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             if (plugin != null)
@@ -121,36 +119,39 @@ public class AgentsController {
         }
     }
 
-    private static String getCompressedParam(String param) {
+    @GET
+    @Path("resources/{region}/{agent}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response resources(@PathParam("region") String region,
+                              @PathParam("agent") String agent) {
+        logger.trace("Call to resources({}, {})", region, agent);
         try {
-            byte[] exportDataRawCompressed = DatatypeConverter.parseBase64Binary(param);
-            InputStream iss = new ByteArrayInputStream(exportDataRawCompressed);
-            InputStream is = new GZIPInputStream(iss);
-            return getStringFromInputStream(is);
-        } catch (IOException e) {
-            return "";
+            if (plugin == null)
+                return Response.ok("{\"regions\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
+            MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+                    plugin.getPluginID(), "Region List Request");
+            request.setParam("src_region", plugin.getRegion());
+            request.setParam("src_agent", plugin.getAgent());
+            request.setParam("src_plugin", plugin.getPluginID());
+            request.setParam("dst_region", plugin.getRegion());
+            request.setParam("globalcmd", Boolean.TRUE.toString());
+            request.setParam("action", "resourceinfo");
+            request.setParam("action_region", region);
+            request.setParam("action_agent", agent);
+            MsgEvent response = plugin.sendRPC(request);
+            if (response == null)
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}", MediaType.APPLICATION_JSON_TYPE).build();
+            String regions = "[]";
+            if (response.getParam("resourceinfo") != null)
+                regions = response.getCompressedParam("resourceinfo");
+            return Response.ok(regions, MediaType.APPLICATION_JSON_TYPE).build();
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            if (plugin != null)
+                logger.error("resources({}, {}) : {}", region, agent, sw.toString());
+            return Response.ok("{\"regions\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
         }
-    }
-
-    private static String getStringFromInputStream(InputStream is) {
-        BufferedReader br = null;
-        StringBuilder sb = new StringBuilder();
-        String line;
-        try {
-            br = new BufferedReader(new InputStreamReader(is));
-            while ((line = br.readLine()) != null)
-                sb.append(line);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return sb.toString();
     }
 }

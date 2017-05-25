@@ -32,7 +32,7 @@
 		<dependency>
 			<groupId>com.researchworx.cresco</groupId>
 			<artifactId>cresco-plugin-library</artifactId>
-			<version>0.4.22</version>
+			<version>0.4.23</version>
 		</dependency>
 
 		<dependency>
@@ -138,6 +138,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
+				<version>3.0.0</version>
 				<configuration>
 					<archive>
 						<manifest>
@@ -151,7 +152,6 @@
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
-					<finalName>${project.artifactId}-${project.version}</finalName>
 					<appendAssemblyId>false</appendAssemblyId>
 				</configuration>
 				<executions>
