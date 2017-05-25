@@ -91,7 +91,8 @@ public class PluginsController {
             request.setParam("action_plugin", pluginID);
             MsgEvent response = plugin.sendRPC(request);
             if (response == null)
-                return Response.ok("{\"error\":\"Cresco rpc response was null\"}", MediaType.APPLICATION_JSON_TYPE).build();
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
+                        MediaType.APPLICATION_JSON_TYPE).build();
             String info = "{}";
             if (response.getParam("plugininfo") != null)
                 info = response.getCompressedParam("plugininfo");
@@ -121,7 +122,8 @@ public class PluginsController {
             request.setParam("action", "listplugins");
             MsgEvent response = plugin.sendRPC(request);
             if (response == null)
-                return Response.ok("{\"error\":\"Cresco rpc response was null\"}", MediaType.APPLICATION_JSON_TYPE).build();
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
+                        MediaType.APPLICATION_JSON_TYPE).build();
             String plugins = "[]";
             if (response.getParam("pluginslist") != null)
                 plugins = response.getCompressedParam("pluginslist");
@@ -152,7 +154,8 @@ public class PluginsController {
             request.setParam("action_region", region);
             MsgEvent response = plugin.sendRPC(request);
             if (response == null)
-                return Response.ok("{\"error\":\"Cresco rpc response was null\"}", MediaType.APPLICATION_JSON_TYPE).build();
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
+                        MediaType.APPLICATION_JSON_TYPE).build();
             String plugins = "[]";
             if (response.getParam("pluginslist") != null)
                 plugins = response.getCompressedParam("pluginslist");
@@ -185,7 +188,8 @@ public class PluginsController {
             request.setParam("action_agent", agent);
             MsgEvent response = plugin.sendRPC(request);
             if (response == null)
-                return Response.ok("{\"error\":\"Cresco rpc response was null\"}", MediaType.APPLICATION_JSON_TYPE).build();
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
+                        MediaType.APPLICATION_JSON_TYPE).build();
             String plugins = "[]";
             if (response.getParam("pluginslist") != null)
                 plugins = response.getCompressedParam("pluginslist");
@@ -214,7 +218,8 @@ public class PluginsController {
             request.setParam("configtype", "plugininventory");
             MsgEvent response = plugin.sendRPC(request);
             if (response == null)
-                return Response.ok("{\"error\":\"Cresco rpc response was null\"}", MediaType.APPLICATION_JSON_TYPE).build();
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
+                        MediaType.APPLICATION_JSON_TYPE).build();
             String plugins = "[]";
             if (response.getParam("pluginlist") != null)
                 plugins = response.getParam("pluginlist");
@@ -250,8 +255,10 @@ public class PluginsController {
         if (plugin == null)
             return Response.ok("{\"error\":true,\"message\":\"No communication channel open to Cresco Agent.\"}",
                     MediaType.APPLICATION_JSON_TYPE).build();
-        logger.info("url: {}, config: {}", jObject.get("url").getAsString(), jObject.get("config").getAsString());
-        MsgEvent addPlugin = new MsgEvent(MsgEvent.Type.CONFIG, plugin.getRegion(), plugin.getAgent(), plugin.getPluginID(),
+        logger.info("url: {}, config: {}", jObject.get("url").getAsString(),
+                jObject.get("config").getAsString());
+        MsgEvent addPlugin = new MsgEvent(MsgEvent.Type.CONFIG, plugin.getRegion(),
+                plugin.getAgent(), plugin.getPluginID(),
                 "Issuing command to add new plugin to agent");
         addPlugin.setParam("src_region", plugin.getRegion());
         addPlugin.setParam("src_agent", plugin.getAgent());

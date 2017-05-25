@@ -41,7 +41,8 @@ public class GlobalController {
             request.setParam("action", "resourceinfo");
             MsgEvent response = plugin.sendRPC(request);
             if (response == null)
-                return Response.ok("{\"error\":\"Cresco rpc response was null\"}", MediaType.APPLICATION_JSON_TYPE).build();
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
+                        MediaType.APPLICATION_JSON_TYPE).build();
             String regions = "[]";
             if (response.getParam("resourceinfo") != null)
                 regions = response.getCompressedParam("resourceinfo");
@@ -52,7 +53,8 @@ public class GlobalController {
             e.printStackTrace(pw);
             if (plugin != null)
                 logger.error("resources() : {}", sw.toString());
-            return Response.ok("{\"error\":\"" + e.getMessage() + "\"}", MediaType.APPLICATION_JSON_TYPE).build();
+            return Response.ok("{\"error\":\"" + e.getMessage() + "\"}",
+                    MediaType.APPLICATION_JSON_TYPE).build();
         }
     }
 }

@@ -76,7 +76,8 @@ public class RegionsController {
             request.setParam("action", "listregions");
             MsgEvent response = plugin.sendRPC(request);
             if (response == null)
-                return Response.ok("{\"error\":\"Cresco rpc response was null\"}", MediaType.APPLICATION_JSON_TYPE).build();
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
+                        MediaType.APPLICATION_JSON_TYPE).build();
             String regions = "[]";
             if (response.getParam("regionslist") != null)
                 regions = response.getCompressedParam("regionslist");
@@ -110,7 +111,8 @@ public class RegionsController {
             request.setParam("action_region", region);
             MsgEvent response = plugin.sendRPC(request);
             if (response == null)
-                return Response.ok("{\"error\":\"Cresco rpc response was null\"}", MediaType.APPLICATION_JSON_TYPE).build();
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
+                        MediaType.APPLICATION_JSON_TYPE).build();
             String regions = "[]";
             if (response.getParam("resourceinfo") != null)
                 regions = response.getCompressedParam("resourceinfo");

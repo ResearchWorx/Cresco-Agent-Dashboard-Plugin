@@ -37,7 +37,8 @@
                                 </button>
                                 <h4 class="modal-title" id="region-info-modal-title"></h4>
                             </div>
-                            <div class="modal-body" id="region-info-modal-body"></div>
+                            <div class="modal-body" id="region-info-modal-body">
+                            </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                             </div>
@@ -78,9 +79,47 @@
             }).complete(function(data) {
                 console.log(data);
                 var json = data['responseJSON'];
+                var disk_avail = parseInt(json.regionresourceinfo[0].disk_available);
+                var disk_total = parseInt(json.regionresourceinfo[0].disk_total);
+                var disk_used = disk_total - disk_avail;
+                var mem_avail = parseInt(json.regionresourceinfo[0].mem_available);
+                var mem_total = parseInt(json.regionresourceinfo[0].mem_total);
+                var mem_used = mem_total - mem_avail;
                 region_info_modal_title.html("Resources: " + region);
-                region_info_modal_body.html('<pre>' + syntaxHighlight(JSON.stringify(json, undefined, 4)) + '</pre>');
+                var body = "";
+                body += "<div class='row'>";
+                body += "<div class='col-xs-6'><div class='card'><div class='card-block'><div class='card-title-block'>Region Disk Usage</div><section class='example'><div id='region-info-modal-body-disk'></div></section></div></div></div>";
+                body += "<div class='col-xs-6'><div id='region-info-modal-body-memory'></div></div>";
+                body += "</div>";
+                body += "<div class='row'><div class='col-xs-12'><pre>" +
+                    syntaxHighlight(JSON.stringify(json, undefined, 4)) +
+                    "</pre></div></div>";
+                region_info_modal_body.html(body);
                 region_info_modal.modal('show');
+                Morris.Donut({
+                    element: 'region-info-modal-body-disk',
+                    data: [
+                        { label: "Disk Free", value: disk_avail },
+                        { label: "Disk Used", value: disk_used }
+                    ],
+                    resize: true,
+                    colors: [
+                        "#00FF00",
+                        "#FF0000"
+                    ]
+                });
+                Morris.Donut({
+                    element: 'region-info-modal-body-memory',
+                    data: [
+                        { label: "Memory Free", value: mem_avail },
+                        { label: "Memory Used", value: mem_used }
+                    ],
+                    resize: true,
+                    colors: [
+                        "#00FF00",
+                        "#FF0000"
+                    ]
+                });
             }).error(function(data) {
                 console.error(data);
             });
