@@ -112,10 +112,137 @@
             $.ajax({
                 url: "/agents/resources/" + region + "/" + agent
             }).complete(function(data) {
-                console.log(data);
-                var json = data['responseJSON'];
                 agent_info_modal_title.html("Resources: <br>" + region + "<br>" + agent);
-                agent_info_modal_body.html('<pre>' + syntaxHighlight(JSON.stringify(json, undefined, 4)) + '</pre>');
+                var json = data['responseJSON'];
+                console.log(json);
+                var agentJSON = json.agentresourceinfo[0];
+                var system = {};
+                system.family = agentJSON['sys-family'];
+                system.manufacturer = agentJSON['sys-manufacturer'];
+                system.os = agentJSON['sys-os'];
+                if (agentJSON.is64bit === 'true')
+                    system.architecture = '64-bit';
+                else
+                    system.architecture = '32-bit';
+                system.uptime = secondsToStr(parseInt(agentJSON['sys-uptime']));
+                console.log(system);
+                var cpu = {};
+                cpu.ident = agentJSON['cpu-ident'];
+                cpu.summary = agentJSON['cpu-summary'];
+                cpu.cores = {};
+                cpu.cores.physical = parseInt(agentJSON['cpu-physical-count']);
+                cpu.cores.logical = parseInt(agentJSON['cpu-logical-count']);
+                cpu.load = {};
+                cpu.load.idle = parseFloat(agentJSON['cpu-idle-load']);
+                cpu.load.nice = parseFloat(agentJSON['cpu-nice-load']);
+                cpu.load.user = parseFloat(agentJSON['cpu-user-load']);
+                cpu.load.system = parseFloat(agentJSON['cpu-sys-load']);
+                console.log(cpu);
+                var memory = {};
+                memory.available = parseInt(agentJSON['memory-available']);
+                memory.total = parseInt(agentJSON['memory-total']);
+                console.log(memory);
+                var fs = [];
+                var tmp_fs = agentJSON['fs-map'].split(",");
+                $.each(tmp_fs, function(i, v) {
+                    var fs_ident = v.split(":");
+                    var tmp_fs_object = {};
+                    tmp_fs_object.name = fs_ident[1];
+                    tmp_fs_object.total = parseInt(agentJSON['fs-' + fs_ident[0] + '-total']);
+                    tmp_fs_object.available = parseInt(agentJSON['fs-' + fs_ident[0] + '-available']);
+                    fs[fs_ident[0]] = tmp_fs_object;
+                });
+                console.log(fs);
+                var nics = [];
+                var tmp_nics = agentJSON['nic-map'].split(",");
+                $.each(tmp_nics, function (i, v) {
+                    var nic_ident = v.split(":");
+                    if (nic_ident[1].indexOf("tun") > -1)
+                        return;
+                    var tmp_nic_object = {};
+                    tmp_nic_object.name = nic_ident[1];
+                    var tmp_nic_ips = agentJSON['nic-' + nic_ident[0] + '-ip'].split(",");
+                    if (tmp_nic_ips.length > 1) {
+                        tmp_nic_object.ipv6 = tmp_nic_ips[0];
+                        tmp_nic_object.ipv4 = tmp_nic_ips[1];
+                    } else
+                        tmp_nic_object.ipv4 = tmp_nic_ips[0];
+                    tmp_nic_object.mtu = parseInt(agentJSON['nic-' + nic_ident[0] + '-mtu']);
+                    nics[nic_ident[0]] = tmp_nic_object;
+                });
+                console.log(nics);
+                var body = "";
+                body += "<div class='row'>";
+                body += "<div class='col-md-6'>";
+                body += "<div class='card'>";
+                body += "<div class='card-block'>";
+                body += "<div class='card-title-block'><h3 class='title'>System (up for " + system.uptime + ")</h3></div>";
+                body += "<br><dl>";
+                body += "<dt>Manufacturer</dt><dd>" + system.manufacturer + "</dd>";
+                body += "<dt>OS</dt><dd>" + system.family + " " + system.os + " (" + system.architecture + ")</dd>";
+                body += "<dt>CPU</dt><dd>";
+                body += "<dl>";
+                body += "<dt>Type</dt><dd>" + cpu.summary + "</dd>";
+                body += "<dt>Cores</dt><dd>Physical: " + cpu.cores.physical + ", Logical: " + cpu.cores.logical + "</dd>";
+                body += "</dl>";
+                body += "</dd>";
+                body += "<dt>Memory (Total):</dt><dd>" + humanFileSize(memory.total, false) + "</dd>";
+                body += "<dt>Networking</dt><dd>";
+                $.each(nics, function(i, nic) {
+                    body += "<dl>";
+                    body += "<dt>Name</dt><dd>" + nic.name + "</dd>";
+                    body += "<dt>MTU</dt><dd>" + nic.mtu + "</dd>";
+                    body += "<dt>IPv4</dt><dd>" + nic.ipv4 + "</dd>";
+                    if (nic.ipv6)
+                        body += "<dt>IPv6</dt><dd>" + nic.ipv6 + "</dd>";
+                    body += "</dl>";
+                    body += "</dd>";
+                });
+                body += "</dl>";
+                body += "</div>";
+                body += "</div>";
+                body += "</div>";
+                body += "<div class='col-md-6'>";
+                body += "<div class='col-md-12'><div class='card'><div class='card-block'><div class='card-title-block'><h3 class='title'>Agent CPU Usage</h3></div><section class='example'><div id='agent-info-modal-body-cpu'></div></section></div></div></div>";
+                body += "<div class='col-md-12'><div class='card'><div class='card-block'><div class='card-title-block'><h3 class='title'>Agent Memory Usage</h3></div><section class='example'><div id='agent-info-modal-body-memory'></div></section></div></div></div>";
+                body += "</div>";
+                body += "</div>";
+                /*body += "<div class='row'><div class='col-xs-12'><pre>" +
+                    syntaxHighlight(JSON.stringify(agentJSON, undefined, 4)) +
+                    "</pre></div></div>";*/
+                agent_info_modal_body.html(body);
+                agent_info_modal.on('shown.bs.modal', function(e) {
+                    $('#agent-info-modal-body-cpu').empty();
+                    Morris.Donut({
+                        element: 'agent-info-modal-body-cpu',
+                        data: [
+                            { label: "Idle", value: cpu.load.idle },
+                            { label: "Nice", value: cpu.load.nice },
+                            { label: "User", value: cpu.load.user },
+                            { label: "System", value: cpu.load.system }
+                        ],
+                        resize: true,
+                        formatter: function(y) {
+                            return y + "%";
+                        }
+                    });
+                    $('#agent-info-modal-body-memory').empty();
+                    Morris.Donut({
+                        element: 'agent-info-modal-body-memory',
+                        data: [
+                            { label: "Memory Free", value: memory.available },
+                            { label: "Memory Used", value: (memory.total - memory.available) }
+                        ],
+                        resize: true,
+                        colors: [
+                            "#35ff87",
+                            "#ff585b"
+                        ],
+                        formatter: function(y) {
+                            return humanFileSize(y, false);
+                        }
+                    });
+                });
                 agent_info_modal.modal('show');
             }).error(function(data) {
                 console.error(data);
@@ -138,6 +265,53 @@
                 }
                 return '<span class="' + cls + '">' + match + '</span>';
             });
+        }
+        function humanFileSize(bytes, si) {
+            var thresh = si ? 1000 : 1024;
+            if(Math.abs(bytes) < thresh) {
+                return bytes + ' B';
+            }
+            var units = si
+                ? ['kB','MB','GB','TB','PB','EB','ZB','YB']
+                : ['KiB','MiB','GiB','TiB','PiB','EiB','ZiB','YiB'];
+            var u = -1;
+            do {
+                bytes /= thresh;
+                ++u;
+            } while(Math.abs(bytes) >= thresh && u < units.length - 1);
+            return bytes.toFixed(1)+' '+units[u];
+        }
+        function secondsToStr (secs) {
+            // TIP: to find current time in milliseconds, use:
+            // var  current_time_milliseconds = new Date().getTime();
+
+            function numberEnding (number) {
+                return (number > 1) ? 's' : '';
+            }
+
+            var temp = secs; //Math.floor(milliseconds / 1000);
+            var years = Math.floor(temp / 31536000);
+            if (years) {
+                return years + ' year' + numberEnding(years);
+            }
+            //TODO: Months! Maybe weeks?
+            var days = Math.floor((temp %= 31536000) / 86400);
+            if (days) {
+                return days + ' day' + numberEnding(days);
+            }
+            var hours = Math.floor((temp %= 86400) / 3600);
+            if (hours) {
+                return hours + ' hour' + numberEnding(hours);
+            }
+            var minutes = Math.floor((temp %= 3600) / 60);
+            if (minutes) {
+                return minutes + ' minute' + numberEnding(minutes);
+            }
+            var seconds = temp % 60;
+            if (seconds) {
+                return seconds + ' second' + numberEnding(seconds);
+            }
+            return 'less than a second'; //'just now' //or other string you like;
         }
     </script>
 {% endblock %}

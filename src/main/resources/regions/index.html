@@ -77,7 +77,6 @@
             $.ajax({
                 url: "/regions/resources/" + region
             }).complete(function(data) {
-                console.log(data);
                 var json = data['responseJSON'];
                 var disk_avail = parseInt(json.regionresourceinfo[0].disk_available);
                 var disk_total = parseInt(json.regionresourceinfo[0].disk_total);
@@ -88,38 +87,48 @@
                 region_info_modal_title.html("Resources: " + region);
                 var body = "";
                 body += "<div class='row'>";
-                body += "<div class='col-xs-6'><div class='card'><div class='card-block'><div class='card-title-block'>Region Disk Usage</div><section class='example'><div id='region-info-modal-body-disk'></div></section></div></div></div>";
-                body += "<div class='col-xs-6'><div id='region-info-modal-body-memory'></div></div>";
+                body += "<div class='col-xs-6'><div class='card'><div class='card-block'><div class='card-title-block'><h3 class='title'>Region Disk Usage</h3></div><section class='example'><div id='region-info-modal-body-disk'></div></section></div></div></div>";
+                body += "<div class='col-xs-6'><div class='card'><div class='card-block'><div class='card-title-block'><h3 class='title'>Region Memory Usage</h3></div><section class='example'><div id='region-info-modal-body-memory'></div></section></div></div></div>";
                 body += "</div>";
-                body += "<div class='row'><div class='col-xs-12'><pre>" +
+                /*body += "<div class='row'><div class='col-xs-12'><pre>" +
                     syntaxHighlight(JSON.stringify(json, undefined, 4)) +
-                    "</pre></div></div>";
+                    "</pre></div></div>";*/
                 region_info_modal_body.html(body);
+                region_info_modal.on('shown.bs.modal', function(e) {
+                    $('#region-info-modal-body-disk').empty();
+                    Morris.Donut({
+                        element: 'region-info-modal-body-disk',
+                        data: [
+                            { label: "Disk Free", value: disk_avail },
+                            { label: "Disk Used", value: disk_used }
+                        ],
+                        resize: true,
+                        colors: [
+                            "#35ff87",
+                            "#ff585b"
+                        ],
+                        formatter: function(y) {
+                            return humanFileSize(y, true);
+                        }
+                    });
+                    $('#region-info-modal-body-memory').empty();
+                    Morris.Donut({
+                        element: 'region-info-modal-body-memory',
+                        data: [
+                            { label: "Memory Free", value: mem_avail },
+                            { label: "Memory Used", value: mem_used }
+                        ],
+                        resize: true,
+                        colors: [
+                            "#35ff87",
+                            "#ff585b"
+                        ],
+                        formatter: function(y) {
+                            return humanFileSize(y, false);
+                        }
+                    });
+                });
                 region_info_modal.modal('show');
-                Morris.Donut({
-                    element: 'region-info-modal-body-disk',
-                    data: [
-                        { label: "Disk Free", value: disk_avail },
-                        { label: "Disk Used", value: disk_used }
-                    ],
-                    resize: true,
-                    colors: [
-                        "#00FF00",
-                        "#FF0000"
-                    ]
-                });
-                Morris.Donut({
-                    element: 'region-info-modal-body-memory',
-                    data: [
-                        { label: "Memory Free", value: mem_avail },
-                        { label: "Memory Used", value: mem_used }
-                    ],
-                    resize: true,
-                    colors: [
-                        "#00FF00",
-                        "#FF0000"
-                    ]
-                });
             }).error(function(data) {
                 console.error(data);
             });
@@ -141,6 +150,21 @@
                 }
                 return '<span class="' + cls + '">' + match + '</span>';
             });
+        }
+        function humanFileSize(bytes, si) {
+            var thresh = si ? 1000 : 1024;
+            if(Math.abs(bytes) < thresh) {
+                return bytes + ' B';
+            }
+            var units = si
+                ? ['kB','MB','GB','TB','PB','EB','ZB','YB']
+                : ['KiB','MiB','GiB','TiB','PiB','EiB','ZiB','YiB'];
+            var u = -1;
+            do {
+                bytes /= thresh;
+                ++u;
+            } while(Math.abs(bytes) >= thresh && u < units.length - 1);
+            return bytes.toFixed(1)+' '+units[u];
         }
     </script>
 {% endblock %}
