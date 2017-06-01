@@ -16,6 +16,7 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -72,18 +73,54 @@ public class ApplicationsController {
             request.setParam("src_plugin", plugin.getPluginID());
             request.setParam("dst_region", plugin.getRegion());
             request.setParam("globalcmd", "true");
-            request.setParam("action", "getgpipelinelist");
+            request.setParam("action", "getgpipelinestatus");
             MsgEvent response = plugin.sendRPC(request);
             if (response == null)
                 return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
                         MediaType.APPLICATION_JSON_TYPE).build();
-            String agents = "[]";
-            if (response.getParam("gpipeline_ids") != null)
-                agents = response.getCompressedParam("gpipeline_ids");
-            return Response.ok(agents, MediaType.APPLICATION_JSON_TYPE).build();
+            String list = "[]";
+            if (response.getParam("pipelineinfo") != null)
+                list = response.getCompressedParam("pipelineinfo");
+            return Response.ok(list, MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             if (plugin != null)
                 logger.error("list() : {}", e.getMessage());
+            return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+        }
+    }
+
+    @POST
+    @Path("add")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public Response add(@FormParam("tenant_id") String tenant,
+                        @FormParam("pipeline") String pipeline) {
+        logger.trace("Call to add({}, {})", tenant, pipeline);
+        try {
+            if (plugin == null)
+                return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+            MsgEvent request = new MsgEvent(MsgEvent.Type.CONFIG, plugin.getRegion(), plugin.getAgent(),
+                    plugin.getPluginID(), "Agent List Request");
+            request.setParam("src_region", plugin.getRegion());
+            request.setParam("src_agent", plugin.getAgent());
+            request.setParam("src_plugin", plugin.getPluginID());
+            request.setParam("dst_region", plugin.getRegion());
+            request.setParam("globalcmd", "true");
+            request.setParam("action", "gpipelinesubmit");
+            request.setParam("action_tenantid", tenant);
+            request.setCompressedParam("action_gpipeline", pipeline);
+            MsgEvent response = plugin.sendRPC(request);
+            if (response == null)
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
+                        MediaType.APPLICATION_JSON_TYPE).build();
+            logger.debug("add - response: {}", response.getParams());
+            String info = "{}";
+            if (response.getParam("gpipeline") != null)
+                info = response.getCompressedParam("gpipeline");
+            return Response.ok(info, MediaType.APPLICATION_JSON_TYPE).build();
+        } catch (Exception e) {
+            if (plugin != null)
+                logger.error("add({}, {}) : {}", tenant, pipeline, e.getMessage());
             return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
         }
     }
@@ -103,16 +140,17 @@ public class ApplicationsController {
             request.setParam("src_plugin", plugin.getPluginID());
             request.setParam("dst_region", plugin.getRegion());
             request.setParam("globalcmd", "true");
-            request.setParam("action", "getgpipline");
-            request.setParam("pipeline_id", id);
+            request.setParam("action", "getgpipeline");
+            request.setParam("action_pipelineid", id);
             MsgEvent response = plugin.sendRPC(request);
             if (response == null)
                 return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
                         MediaType.APPLICATION_JSON_TYPE).build();
-            String agents = "[]";
-            if (response.getParam("gpipeline_ids") != null)
-                agents = response.getCompressedParam("gpipeline_ids");
-            return Response.ok(agents, MediaType.APPLICATION_JSON_TYPE).build();
+            logger.debug("info - response: {}", response.getParams());
+            String info = "{}";
+            if (response.getParam("gpipeline") != null)
+                info = response.getCompressedParam("gpipeline");
+            return Response.ok(info, MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             if (plugin != null)
                 logger.error("info({}) : {}", id, e.getMessage());
@@ -121,33 +159,31 @@ public class ApplicationsController {
     }
 
     @GET
-    @Path("status/{id}")
+    @Path("delete/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response status(@PathParam("id") String id) {
-        logger.trace("Call to status({})", id);
+    public Response delete(@PathParam("id") String id) {
+        logger.trace("Call to delete({})", id);
         try {
             if (plugin == null)
                 return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
-            MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+            MsgEvent request = new MsgEvent(MsgEvent.Type.CONFIG, plugin.getRegion(), plugin.getAgent(),
                     plugin.getPluginID(), "Agent List Request");
             request.setParam("src_region", plugin.getRegion());
             request.setParam("src_agent", plugin.getAgent());
             request.setParam("src_plugin", plugin.getPluginID());
             request.setParam("dst_region", plugin.getRegion());
             request.setParam("globalcmd", "true");
-            request.setParam("action", "getgpipline");
-            request.setParam("pipeline_id", id);
+            request.setParam("action", "gpipelineremove");
+            request.setParam("action_pipelineid", id);
             MsgEvent response = plugin.sendRPC(request);
             if (response == null)
                 return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
                         MediaType.APPLICATION_JSON_TYPE).build();
-            String agents = "[]";
-            if (response.getParam("gpipeline_ids") != null)
-                agents = response.getCompressedParam("gpipeline_ids");
-            return Response.ok(agents, MediaType.APPLICATION_JSON_TYPE).build();
+            logger.debug("delete - response: {}", response.getParams());
+            return Response.seeOther(new URI("/applications")).cookie().build();
         } catch (Exception e) {
             if (plugin != null)
-                logger.error("status({}) : {}", id, e.getMessage());
+                logger.error("delete({}) : {}", id, e.getMessage());
             return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
         }
     }
