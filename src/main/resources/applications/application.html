@@ -1,0 +1,156 @@
+{% extends "page.html" %}
+
+{% block title %}Application{% endblock %}
+
+{% block pagecss %}
+    <link rel="stylesheet" href="/includes/css/datatables.min.css">
+{% endblock %}
+
+{% block pagecontent %}
+                <div id='app-row' class="row">
+                    <div class="card card-outline-primary">
+                        <div class="card-header bordered">
+                            <div class="header-block">
+                                <h2 class="cresco-list-title">Application</h2>
+                            </div>
+                            <div class="header-block pull-right">
+                                <button type="button" class="btn btn-success" onclick="exportApp()"><i class="fa fa-download" aria-hidden="true"></i> Export Application</button>
+                            </div>
+                        </div>
+                        <div class="card-block">
+                            <table cellpadding="5" cellspacing="0" border="0" style="padding-left: 50px;" width="100%">
+                                <tbody>
+                                    <tr>
+                                        <td>Name: </td>
+                                        <td id="application-name"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Status: </td>
+                                        <td id="application-status"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div id='nodes-row' class="row">
+                    <div class="card card-outline-primary">
+                        <div class="card-header bordered">
+                            <div class="header-block">
+                                <h3 class="cresco-list-title">Worker Nodes</h3>
+                            </div>
+                        </div>
+                        <div class="card-block">
+                            <table id='nodes' class='table table-bordered table-striped' cellspacing="0" width='100%'>
+                                <thead>
+                                <tr>
+                                    <td>ID</td>
+                                    <td>Name</td>
+                                    <td>Type</td>
+                                    <td>Status</td>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <td>ID</td>
+                                    <td>Name</td>
+                                    <td>Type</td>
+                                    <td>Status</td>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+{% endblock %}
+
+{% block pagejs %}
+    <script type="text/javascript" src="/includes/js/datatables.min.js"></script>
+    <script type="text/javascript">
+        var app_name = $('#application-name');
+        var app_status = $('#application-status');
+        var node_table = $('#nodes');
+        var node_table_body = $('#nodes tbody');
+        var pipeline_id = "{{ app_id }}";
+        var pipeline;
+        $(function() {
+            $.ajax({
+                url: "/applications/info/" + pipeline_id
+            }).complete(function(data) {
+                pipeline = data['responseJSON'];
+                console.log(pipeline);
+                app_name.html(pipeline.pipeline_name);
+                app_status.html(pipeline.status_desc);
+                var body = '';
+                $.each(pipeline.nodes, function(i, v) {
+                    body += '<tr node_id="' + v.node_id + '" node_name="' + v.node_name + '">';
+                    body += '<td>' + v.node_id + '</td>';
+                    body += '<td>' + v.node_name + '</td>';
+                    body += '<td>' + v.type + '</td>';
+                    body += '<td>' + v.params.status_desc.replace('iNode', 'Node') + '</td>';
+                    body += '</tr>';
+                });
+                node_table_body.html(body);
+                var nodes = node_table.DataTable({
+                    "columns": [
+                        { "visible": false },
+                        {},
+                        {},
+                        {}
+                    ]
+                });
+                node_table_body.on('click', 'tr', function() {
+                    var tr = $(this);
+                    var row = nodes.row( tr );
+                    var node_id = tr.attr('node_id');
+                    var node_name = tr.attr('node_name');
+                    if (row.child.isShown()) {
+                        row.child.hide();
+                        tr.removeClass('shown');
+                    } else {
+                        var edges = '';
+                        edges += '<div class="container">';
+                        edges += '<div class="row">';
+                        edges += '<div class="col-xs-12">';
+                        edges += '<div class="card card-outline-secondary">';
+                        edges += '<div class="card-header bordered">';
+                        edges += '<div class="header-block"> ';
+                        edges += '<h4 class="cresco-list-title">' + node_name + '\'s Edges</h4>';
+                        edges += '</div>';
+                        edges += '</div>';
+                        edges += '<div class="card-block">';
+                        edges += '<table id="' + node_id + '-edges" class="table table-bordered table-striped" cellspacing="0" width="100%">';
+                        edges += '<thead><tr><td>ID</td><td>From</td><td>To</td></tr></thead>';
+                        edges += '<tbody>';
+                        $.each(pipeline.edges, function(i, v) {
+                            if (node_id === v.node_to || node_id === v.node_from || true) {
+                                edges += '<tr>';
+                                edges += '<td>' + v.edge_id + '</td>';
+                                edges += '<td>' + v.node_from + '</td>';
+                                edges += '<td>' + v.node_to + '</td>';
+                                edges += '</tr>';
+                            }
+                        });
+                        edges += '</tbody>';
+                        edges += '<tfoot><tr><td>ID</td><td>From</td><td>To</td></tr></tfoot>';
+                        edges += '</table>';
+                        edges += '</div>';
+                        edges += '</div>';
+                        edges += '</div>';
+                        edges += '</div>';
+                        edges += '</div>';
+                        row.child(edges).show();
+                        $('#' + node_id + '-edges').DataTable();
+                    }
+                });
+            }).error(function(data) {
+                console.error(data);
+            });
+        });
+        function exportApp() {
+            alert('This will be implemented soon!');
+        }
+    </script>
+{% endblock %}

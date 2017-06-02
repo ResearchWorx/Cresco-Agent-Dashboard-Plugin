@@ -2876,3 +2876,15 @@ pre {
   @media (max-width: 767px) {
     .header .header-block-nav .profile-dropdown-menu {
       margin-top: 8px; } }
+
+
+
+/*
+ * Cresco-specific
+ */
+
+.cresco-list-title {
+  margin-bottom: 0;
+  margin-top: 0;
+  color: #4f5f6f;
+}

@@ -37,13 +37,43 @@ public class ApplicationsController {
         try {
             LoginSession loginSession = LoginSessionService.getByID(sessionID);
             PebbleEngine engine = new PebbleEngine.Builder().build();
-            PebbleTemplate compiledTemplate = engine.getTemplate("applications/index.html");
+            PebbleTemplate compiledTemplate = engine.getTemplate("applications/list.html");
 
             Map<String, Object> context = new HashMap<>();
             if (loginSession != null)
                 context.put("user", loginSession.getUsername());
             context.put("section", "applications");
             context.put("page", "index");
+
+            Writer writer = new StringWriter();
+            compiledTemplate.evaluate(writer, context);
+
+            return Response.ok(writer.toString()).build();
+        } catch (PebbleException e) {
+            return Response.ok("PebbleException: " + e.getMessage()).build();
+        } catch (IOException e) {
+            return Response.ok("IOException: " + e.getMessage()).build();
+        } catch (Exception e) {
+            return Response.ok("Server error: " + e.getMessage()).build();
+        }
+    }
+
+    @GET
+    @Path("details/{id}")
+    @Produces(MediaType.TEXT_HTML)
+    public Response application(@CookieParam(AuthenticationFilter.SESSION_COOKIE_NAME) String sessionID,
+                                @PathParam("id") String id) {
+        try {
+            LoginSession loginSession = LoginSessionService.getByID(sessionID);
+            PebbleEngine engine = new PebbleEngine.Builder().build();
+            PebbleTemplate compiledTemplate = engine.getTemplate("applications/application.html");
+
+            Map<String, Object> context = new HashMap<>();
+            if (loginSession != null)
+                context.put("user", loginSession.getUsername());
+            context.put("section", "applications");
+            context.put("page", "application");
+            context.put("app_id", id);
 
             Writer writer = new StringWriter();
             compiledTemplate.evaluate(writer, context);

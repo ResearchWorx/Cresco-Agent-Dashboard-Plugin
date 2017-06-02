@@ -1,43 +1,46 @@
 {% extends "page.html" %}
 
-{% block title %}Applications Overview{% endblock %}
+{% block title %}Applications List{% endblock %}
 
 {% block pagecss %}
     <link rel="stylesheet" href="/includes/css/datatables.min.css">
 {% endblock %}
 
 {% block pagecontent %}
-                <h1>Applications</h1>
-                <div class="row">
-                    <div class="col-xs-9">
-                        &nbsp;
-                    </div>
-                    <div class="col-xs-3">
-                        <button type="button" class="btn btn-success" onclick="showAddApp()"><i class="fa fa-plus" aria-hidden="true"></i> New Application</button>
-                    </div>
-                </div>
                 <div id='apps-row' class="row">
                     <div class="col-xs-12">
-                        <table id='apps' class='table table-bordered table-striped' cellspacing="0" width='100%'>
-                            <thead>
-                            <tr>
-                                <td>Name</td>
-                                <td>Tenant</td>
-                                <td>Status</td>
-                                <td></td>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                            <tfoot>
-                            <tr>
-                                <td>Name</td>
-                                <td>Tenant</td>
-                                <td>Status</td>
-                                <td></td>
-                            </tr>
-                            </tfoot>
-                        </table>
+                        <div class="card card-outline-primary">
+                            <div class="card-header bordered">
+                                <div class="header-block">
+                                    <h3 class="cresco-list-title">Applications</h3>
+                                </div>
+                                <div class="header-block pull-right">
+                                    <button type="button" class="btn btn-success" onclick="showAddApp()"><i class="fa fa-plus" aria-hidden="true"></i> New Application</button>
+                                </div>
+                            </div>
+                            <div class="card-block">
+                                <table id='apps' class='table table-bordered table-striped' cellspacing="0" width='100%'>
+                                    <thead>
+                                    <tr>
+                                        <td>Name</td>
+                                        <td>Tenant</td>
+                                        <td>Status</td>
+                                        <td></td>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                    <tfoot>
+                                    <tr>
+                                        <td>Name</td>
+                                        <td>Tenant</td>
+                                        <td>Status</td>
+                                        <td></td>
+                                    </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal fade" id="apps-info-modal">
@@ -102,14 +105,22 @@
             var body = '';
             $.each(json.pipelines, function(i, v) {
                 body += '<tr>';
-                body += '<td><a style="cursor: pointer" onclick="info(\'' + v.pipeline_id + '\');">' + v.pipeline_name + '</a></td>';
+                //body += '<td><a style="cursor: pointer" onclick="info(\'' + v.pipeline_id + '\');">' + v.pipeline_name + '</a></td>';
+                body += '<td><a href="/applications/details/' + v.pipeline_id + '">' + v.pipeline_name + '</a></td>';
                 body += '<td>' + v.tenant_id + '</td>';
                 body += '<td>' + v.status_desc + '</td>';
-                body += '<td><a href="/applications/delete/' + v.pipeline_id + '" class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i></a>';
+                body += '<td><center><a href="/applications/delete/' + v.pipeline_id + '" class="btn btn-danger"><i class="fa fa-trash" aria-hidden="true"></i></a></center></td>';
                 body += '</tr>';
             });
             apps_body.html(body);
-            apps.DataTable();
+            apps.DataTable({
+                "columns": [
+                    {}, // Name
+                    {}, // Tenant
+                    {}, // Status
+                    { "orderable": false }  // Delete
+                ]
+            });
         }).error(function(data) {
             console.error(data);
         });
