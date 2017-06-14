@@ -64,6 +64,23 @@
                         </div>
                     </div>
                 </div>
+                <div class="modal fade" id="pipeline-export-modal">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                    <span class="sr-only">Close</span>
+                                </button>
+                                <h4 class="modal-title" id="pipeline-export-modal-title"></h4>
+                            </div>
+                            <div class="modal-body" id="pipeline-export-modal-body"></div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 {% endblock %}
 
 {% block pagejs %}
@@ -75,6 +92,9 @@
         var node_table_body = $('#nodes tbody');
         var pipeline_id = "{{ app_id }}";
         var pipeline;
+        var pipeline_export_modal = $('#pipeline-export-modal');
+        var pipeline_export_modal_title = $('#pipeline-export-modal-title');
+        var pipeline_export_modal_body = $('#pipeline-export-modal-body');
         $(function() {
             $.ajax({
                 url: "/applications/info/" + pipeline_id
@@ -150,7 +170,34 @@
             });
         });
         function exportApp() {
-            alert('This will be implemented soon!');
+            $.ajax({
+                url: "/applications/export/" + pipeline_id
+            }).complete(function(data) {
+                var json = data['responseJSON'];
+                pipeline_export_modal_title.html(pipeline_id);
+                pipeline_export_modal_body.html('<pre>' + syntaxHighlight(JSON.stringify(json, undefined, 4)) + '</pre>');
+                pipeline_export_modal.modal('show');
+            }).error(function(data) {
+                console.error(data);
+            });
+        }
+        function syntaxHighlight(json) {
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                var cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
         }
     </script>
 {% endblock %}

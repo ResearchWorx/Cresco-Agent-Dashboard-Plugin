@@ -88,6 +88,8 @@ public class ApplicationsController {
         }
     }
 
+
+
     @GET
     @Path("list")
     @Produces(MediaType.APPLICATION_JSON)
@@ -143,7 +145,6 @@ public class ApplicationsController {
             if (response == null)
                 return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
                         MediaType.APPLICATION_JSON_TYPE).build();
-            logger.debug("add - response: {}", response.getParams());
             String info = "{}";
             if (response.getParam("gpipeline") != null)
                 info = response.getCompressedParam("gpipeline");
@@ -176,7 +177,6 @@ public class ApplicationsController {
             if (response == null)
                 return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
                         MediaType.APPLICATION_JSON_TYPE).build();
-            logger.debug("info - response: {}", response.getParams());
             String info = "{}";
             if (response.getParam("gpipeline") != null)
                 info = response.getCompressedParam("gpipeline");
@@ -184,6 +184,38 @@ public class ApplicationsController {
         } catch (Exception e) {
             if (plugin != null)
                 logger.error("info({}) : {}", id, e.getMessage());
+            return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+        }
+    }
+
+    @GET
+    @Path("export/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response export(@PathParam("id") String id) {
+        logger.trace("Call to export({})", id);
+        try {
+            if (plugin == null)
+                return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+            MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+                    plugin.getPluginID(), "Agent List Request");
+            request.setParam("src_region", plugin.getRegion());
+            request.setParam("src_agent", plugin.getAgent());
+            request.setParam("src_plugin", plugin.getPluginID());
+            request.setParam("dst_region", plugin.getRegion());
+            request.setParam("globalcmd", "true");
+            request.setParam("action", "getgpipelineexport");
+            request.setParam("action_pipelineid", id);
+            MsgEvent response = plugin.sendRPC(request);
+            if (response == null)
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
+                        MediaType.APPLICATION_JSON_TYPE).build();
+            String info = "{}";
+            if (response.getParam("gpipeline") != null)
+                info = response.getCompressedParam("gpipeline");
+            return Response.ok(info, MediaType.APPLICATION_JSON_TYPE).build();
+        } catch (Exception e) {
+            if (plugin != null)
+                logger.error("export({}) : {}", id, e.getMessage());
             return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
         }
     }
@@ -209,7 +241,6 @@ public class ApplicationsController {
             if (response == null)
                 return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
                         MediaType.APPLICATION_JSON_TYPE).build();
-            logger.debug("delete - response: {}", response.getParams());
             return Response.seeOther(new URI("/applications")).cookie().build();
         } catch (Exception e) {
             if (plugin != null)

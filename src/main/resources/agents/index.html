@@ -143,15 +143,27 @@
                 memory.total = parseInt(agentJSON['memory-total']);
                 console.log(memory);
                 var fs = [];
-                var tmp_fs = agentJSON['fs-map'].split(",");
-                $.each(tmp_fs, function(i, v) {
-                    var fs_ident = v.split(":");
-                    var tmp_fs_object = {};
-                    tmp_fs_object.name = fs_ident[1];
-                    tmp_fs_object.total = parseInt(agentJSON['fs-' + fs_ident[0] + '-total']);
-                    tmp_fs_object.available = parseInt(agentJSON['fs-' + fs_ident[0] + '-available']);
-                    fs[fs_ident[0]] = tmp_fs_object;
-                });
+                if (agentJSON.hasOwnProperty('fs-map')) {
+                    var tmp_fs = agentJSON['fs-map'].split(",");
+                    $.each(tmp_fs, function (i, v) {
+                        var fs_ident = v.split(":");
+                        var tmp_fs_object = {};
+                        tmp_fs_object.name = fs_ident[1];
+                        tmp_fs_object.total = parseInt(agentJSON['fs-' + fs_ident[0] + '-total']);
+                        tmp_fs_object.available = parseInt(agentJSON['fs-' + fs_ident[0] + '-available']);
+                        fs[fs_ident[0]] = tmp_fs_object;
+                    });
+                } else if (agentJSON.hasOwnProperty('disk-map')) {
+                    var tmp_fs = agentJSON['disk-map'].split(",");
+                    $.each(tmp_fs, function (i, v) {
+                        var fs_ident = v.split(":");
+                        var tmp_fs_object = {};
+                        tmp_fs_object.name = fs_ident[1];
+                        tmp_fs_object.total = parseInt(agentJSON['disk-' + fs_ident[0] + '-total']);
+                        tmp_fs_object.available = parseInt(agentJSON['disk-' + fs_ident[0] + '-available']);
+                        fs[fs_ident[0]] = tmp_fs_object;
+                    });
+                }
                 console.log(fs);
                 var nics = [];
                 var tmp_nics = agentJSON['nic-map'].split(",");
