@@ -48,12 +48,6 @@ public class PluginsController {
                 context.put("user", loginSession.getUsername());
             context.put("section", "plugins");
             context.put("page", "index");
-            /*if (plugin == null)
-                context.put("pluginPath", "plugins/");
-            else {
-                String jarfile = plugin.getConfig().getStringParam("jarfile");
-                context.put("pluginPath", jarfile.substring(0, jarfile.lastIndexOf('/') + 1));
-            }*/
 
             Writer writer = new StringWriter();
             compiledTemplate.evaluate(writer, context);
@@ -74,7 +68,7 @@ public class PluginsController {
     public Response info(@PathParam("region") String region,
                          @PathParam("agent") String agent,
                          @PathParam("plugin") String pluginID) {
-        logger.trace("Call to info()");
+        logger.trace("Call to info({}, {}, {})", region, agent, pluginID);
         try {
             if (plugin == null)
                 return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
@@ -99,7 +93,7 @@ public class PluginsController {
             return Response.ok(info, MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             if (plugin != null)
-                logger.error("info() : {}", e.getMessage());
+                logger.error("info({}, {}, {}) : {}", region, agent, pluginID, e.getMessage());
             return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
         }
     }
@@ -162,7 +156,7 @@ public class PluginsController {
             return Response.ok(plugins, MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             if (plugin != null)
-                logger.error("list() : {}", e.getMessage());
+                logger.error("listByRegion({}) : {}", region, e.getMessage());
             return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
         }
     }
@@ -172,7 +166,7 @@ public class PluginsController {
     @Produces(MediaType.APPLICATION_JSON)
     public Response listByAgent(@PathParam("region") String region,
                                 @PathParam("agent") String agent) {
-        logger.trace("Call to listByAgent()");
+        logger.trace("Call to listByAgent({}, {})", region, agent);
         try {
             if (plugin == null)
                 return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
@@ -196,7 +190,7 @@ public class PluginsController {
             return Response.ok(plugins, MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             if (plugin != null)
-                logger.error("list() : {}", e.getMessage());
+                logger.error("listByAgent({}, {}) : {}", region, agent, e.getMessage());
             return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
         }
     }

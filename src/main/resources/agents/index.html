@@ -22,20 +22,26 @@
                     <div class="col-xs-12">
                         <table id='agents' class='table table-bordered table-striped' cellspacing="0" width='100%'>
                             <thead>
-                            <tr>
-                                <td>Agent</td>
-                                <td>Region</td>
-                                <td>Plugins</td>
-                            </tr>
+                                <tr>
+                                    <td>Agent</td>
+                                    <td>Region</td>
+                                    <td>Location</td>
+                                    <td>Environment</td>
+                                    <td>Platform</td>
+                                    <td>Plugins</td>
+                                </tr>
                             </thead>
                             <tbody>
                             </tbody>
-                            <tfoot>
-                            <tr>
-                                <td>Agent</td>
-                                <td>Region</td>
-                                <td>Plugins</td>
-                            </tr>
+                                <tfoot>
+                                <tr>
+                                    <td>Agent</td>
+                                    <td>Region</td>
+                                    <td>Location</td>
+                                    <td>Environment</td>
+                                    <td>Platform</td>
+                                    <td>Plugins</td>
+                                </tr>
                             </tfoot>
                         </table>
                     </div>
@@ -97,11 +103,43 @@
                         body += '<tr>';
                         body += '<td><a style="cursor: pointer" onclick="resources(\'' + v.region + '\',\'' + v.name + '\');">' + v.name + '</a></td>';
                         body += '<td>' + v.region + '</td>';
+                        body += '<td>' + v.location + '</td>';
+                        body += '<td>' + v.environment + '</td>';
+                        body += '<td>' + v.platform + '</td>';
                         body += '<td>' + v.plugins + '</td>';
                         body += '</tr>';
                     });
                     agents_body.html(body);
-                    agents.DataTable();
+                    agents.DataTable({
+                        "buttons": [
+                            "pageLength", "colvis"
+                        ],
+                        "columns": [
+                            {
+                                "responsivePriority": 1
+                            },
+                            {
+                                "responsivePriority": 2
+                            },
+                            {
+                                "responsivePriority": 4
+                            },
+                            {
+                                "responsivePriority": 6,
+                                "visible": false
+                            },
+                            {
+                                "responsivePriority": 5,
+                                "visible": false
+                            },
+                            {
+                                "responsivePriority": 3
+                            }
+                        ],
+                        "destroy": true,
+                        "dom": 'Bfrtip',
+                        "responsive": true
+                    });
                     agents_row.css('display', 'block');
                 }).error(function(data) {
                     console.error(data);

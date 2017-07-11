@@ -93,7 +93,7 @@ public class AgentsController {
     @Path("list/{region}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response listByRegion(@PathParam("region") String region) {
-        logger.trace("Call to listByRegion()");
+        logger.trace("Call to listByRegion({})", region);
         try {
             if (plugin == null)
                 return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
@@ -116,7 +116,7 @@ public class AgentsController {
             return Response.ok(agents, MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             if (plugin != null)
-                logger.error("list() : {}", e.getMessage());
+                logger.error("listByRegion({}) : {}", region, e.getMessage());
             return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
         }
     }
