@@ -211,10 +211,21 @@ public class ApplicationsController {
             if (response == null)
                 return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
                         MediaType.APPLICATION_JSON_TYPE).build();
-            String info = "{}";
+            StringBuilder info = new StringBuilder();
+            info.append("{");
+            info.append("\"isassignmentinfo\":");
             if (response.getParam("isassignmentinfo") != null)
-                info = response.getCompressedParam("isassignmentinfo");
-            return Response.ok(info, MediaType.APPLICATION_JSON_TYPE).build();
+                info.append(response.getCompressedParam("isassignmentinfo"));
+            else
+                info.append("{}");
+            info.append(",");
+            info.append("\"isassignmentresourceinfo\":");
+            if (response.getParam("isassignmentresourceinfo") != null)
+                info.append(response.getCompressedParam("isassignmentresourceinfo"));
+            else
+                info.append("{}");
+            info.append("}");
+            return Response.ok(info.toString(), MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             if (plugin != null)
                 logger.error("nodeInfo({}) : {}", inode_id, resource_id, e.getMessage());

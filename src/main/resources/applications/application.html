@@ -123,6 +123,8 @@
                 });
                 node_table_body.on('click', 'tr', function() {
                     var tr = $(this);
+                    if (!tr.attr('inode_id') || !tr.attr('resource_id'))
+                        return;
                     var row = nodes.row( tr );
                     var node_id = tr.attr('node_id');
                     var node_name = tr.attr('node_name');
@@ -136,7 +138,63 @@
                             url: "/applications/nodeinfo/" + inode_id + "/" + resource_id
                         }).complete(function(nodeResponse) {
                             var nodeData = nodeResponse['responseJSON'];
-                            row.child('<pre>' + syntaxHighlight(JSON.stringify(nodeData, undefined, 4)) + '</pre>').show();
+                            console.log(nodeData);
+                            var tmpId = guid();
+                            var nodeBody = "";
+                            nodeBody += "<div class='row'>";
+                            nodeBody += "<div class='col-md-12'>";
+                            nodeBody += "<div class='card'>";
+                            nodeBody += "<div class='card-block'>";
+                            nodeBody += "<div class='card-title-block'><h3 class='title'>Node (Active for " + secondsToStr(nodeData.isassignmentresourceinfo.runTime) + ")</h3></div>";
+                            nodeBody += "<br><dl>";
+                            nodeBody += "<dt>Disk</dt><dd>Read: " + humanFileSize(nodeData.isassignmentresourceinfo.diskReadTotal, false) + " / Write: " + humanFileSize(nodeData.isassignmentresourceinfo.diskWriteTotal, false) + "</dd>";
+                            nodeBody += "<dt>Network</dt><dd>RX: " + humanFileSize(nodeData.isassignmentresourceinfo.networkRxTotal, false) + " / TX: " + humanFileSize(nodeData.isassignmentresourceinfo.networkTxTotal, false) + "</dd>";
+                            nodeBody += "</dl>";
+                            nodeBody += "</div>";
+                            nodeBody += "</div>";
+                            nodeBody += "</div>";
+                            nodeBody += "</div>";
+                            nodeBody += "<div class='row'>";
+                            nodeBody += "<div class='col-md-12'>";
+                            nodeBody += "<div class='col-md-6'><div class='card'><div class='card-block'><div class='card-title-block'><h3 class='title'>Node CPU Usage</h3></div><section class='example'><div id='" + tmpId + "-node-cpu'></div></section></div></div></div>";
+                            nodeBody += "<div class='col-md-6'><div class='card'><div class='card-block'><div class='card-title-block'><h3 class='title'>Node Memory Usage</h3></div><section class='example'><div id='" + tmpId + "-node-memory'></div></section></div></div>";
+                            //nodeBody += "<div class='col-md-12'>";
+                            nodeBody += "<dl>";
+                            nodeBody += "<dt>Memory</dt><dd>Average: " + humanFileSize(nodeData.isassignmentresourceinfo.memAve, false) + " / Max: " + humanFileSize(nodeData.isassignmentresourceinfo.memMax, false) + "</dd>";
+                            nodeBody += "</dl>";
+                            nodeBody += "</div>";
+                            nodeBody += "</div>";
+                            nodeBody += "</div>";
+                            //row.child('<pre>' + syntaxHighlight(JSON.stringify(nodeData, undefined, 4)) + '</pre>').show();
+                            row.child(nodeBody).show();
+                            $('#' + tmpId + '-node-cpu').empty();
+                            Morris.Donut({
+                                element: tmpId + '-node-cpu',
+                                data: [
+                                    { label: "Node", value: nodeData.isassignmentresourceinfo.cpuAve },
+                                    { label: "System", value: (100 - nodeData.isassignmentresourceinfo.cpuAve) }
+                                ],
+                                resize: true,
+                                formatter: function(y) {
+                                    return y.toFixed(2) + "%";
+                                }
+                            });
+                            $('#' + tmpId + '-node-memory').empty();
+                            Morris.Donut({
+                                element: tmpId + '-node-memory',
+                                data: [
+                                    { label: "Node", value: nodeData.isassignmentresourceinfo.memCurrent },
+                                    { label: "System", value: nodeData.isassignmentresourceinfo.memLimit - nodeData.isassignmentresourceinfo.memCurrent }
+                                ],
+                                resize: true,
+                                colors: [
+                                    "#35ff87",
+                                    "#ff585b"
+                                ],
+                                formatter: function(y) {
+                                    return humanFileSize(y, false);
+                                }
+                            });
                         }).error(function(errorData) {
                             console.error(errorData);
                         });
@@ -208,6 +266,62 @@
                 }
                 return '<span class="' + cls + '">' + match + '</span>';
             });
+        }
+        function humanFileSize(bytes, si) {
+            var thresh = si ? 1000 : 1024;
+            if(Math.abs(bytes) < thresh) {
+                return bytes + ' B';
+            }
+            var units = si
+                ? ['kB','MB','GB','TB','PB','EB','ZB','YB']
+                : ['KiB','MiB','GiB','TiB','PiB','EiB','ZiB','YiB'];
+            var u = -1;
+            do {
+                bytes /= thresh;
+                ++u;
+            } while(Math.abs(bytes) >= thresh && u < units.length - 1);
+            return bytes.toFixed(1)+' '+units[u];
+        }
+        function secondsToStr (secs) {
+            // TIP: to find current time in milliseconds, use:
+            // var  current_time_milliseconds = new Date().getTime();
+
+            function numberEnding (number) {
+                return (number > 1) ? 's' : '';
+            }
+
+            var temp = secs; //Math.floor(milliseconds / 1000);
+            var years = Math.floor(temp / 31536000);
+            if (years) {
+                return years + ' year' + numberEnding(years);
+            }
+            //TODO: Months! Maybe weeks?
+            var days = Math.floor((temp %= 31536000) / 86400);
+            if (days) {
+                return days + ' day' + numberEnding(days);
+            }
+            var hours = Math.floor((temp %= 86400) / 3600);
+            if (hours) {
+                return hours + ' hour' + numberEnding(hours);
+            }
+            var minutes = Math.floor((temp %= 3600) / 60);
+            if (minutes) {
+                return minutes + ' minute' + numberEnding(minutes);
+            }
+            var seconds = temp % 60;
+            if (seconds) {
+                return seconds + ' second' + numberEnding(seconds);
+            }
+            return 'less than a second'; //'just now' //or other string you like;
+        }
+        function guid() {
+            function s4() {
+                return Math.floor((1 + Math.random()) * 0x10000)
+                    .toString(16)
+                    .substring(1);
+            }
+            return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+                s4() + '-' + s4() + s4() + s4();
         }
     </script>
 {% endblock %}
