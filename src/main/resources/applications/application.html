@@ -105,7 +105,7 @@
                 app_status.html(pipeline.status_desc);
                 var body = '';
                 $.each(pipeline.nodes, function(i, v) {
-                    body += '<tr node_id="' + v.node_id + '" node_name="' + v.node_name + '">';
+                    body += '<tr node_id="' + v.node_id + '" node_name="' + v.node_name + '" inode_id="'  + v.params.inode_id + '" resource_id="'  + v.params.resource_id + '">';
                     body += '<td>' + v.node_id + '</td>';
                     body += '<td>' + v.node_name + '</td>';
                     body += '<td>' + v.type + '</td>';
@@ -126,11 +126,21 @@
                     var row = nodes.row( tr );
                     var node_id = tr.attr('node_id');
                     var node_name = tr.attr('node_name');
+                    var inode_id = tr.attr('inode_id');
+                    var resource_id = tr.attr('resource_id');
                     if (row.child.isShown()) {
                         row.child.hide();
                         tr.removeClass('shown');
                     } else {
-                        var edges = '';
+                        $.ajax({
+                            url: "/applications/nodeinfo/" + inode_id + "/" + resource_id
+                        }).complete(function(nodeResponse) {
+                            var nodeData = nodeResponse['responseJSON'];
+                            row.child('<pre>' + syntaxHighlight(JSON.stringify(nodeData, undefined, 4)) + '</pre>').show();
+                        }).error(function(errorData) {
+                            console.error(errorData);
+                        });
+                        /*var edges = '';
                         edges += '<div class="container">';
                         edges += '<div class="row">';
                         edges += '<div class="col-xs-12">';
@@ -141,7 +151,7 @@
                         edges += '</div>';
                         edges += '</div>';
                         edges += '<div class="card-block">';
-                        edges += '<table id="' + node_id + '-edges" class="table table-bordered table-striped" cellspacing="0" width="100%">';
+                        edges += '<table id="' + node_id + '-edges" class="table table-bordered table-striped" cellspacing="0">';
                         edges += '<thead><tr><td>ID</td><td>From</td><td>To</td></tr></thead>';
                         edges += '<tbody>';
                         $.each(pipeline.edges, function(i, v) {
@@ -162,7 +172,7 @@
                         edges += '</div>';
                         edges += '</div>';
                         row.child(edges).show();
-                        $('#' + node_id + '-edges').DataTable();
+                        $('#' + node_id + '-edges').DataTable();*/
                     }
                 });
             }).error(function(data) {

@@ -189,6 +189,40 @@ public class ApplicationsController {
     }
 
     @GET
+    @Path("nodeinfo/{inode}/{resource}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response nodeInfo(@PathParam("inode") String inode_id,
+                             @PathParam("resource") String resource_id) {
+        logger.trace("Call to nodeInfo({}, {})", inode_id, resource_id);
+        try {
+            if (plugin == null)
+                return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+            MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+                    plugin.getPluginID(), "Agent List Request");
+            request.setParam("src_region", plugin.getRegion());
+            request.setParam("src_agent", plugin.getAgent());
+            request.setParam("src_plugin", plugin.getPluginID());
+            request.setParam("dst_region", plugin.getRegion());
+            request.setParam("globalcmd", "true");
+            request.setParam("action", "getisassignmentinfo");
+            request.setParam("action_inodeid", inode_id);
+            request.setParam("action_resourceid", resource_id);
+            MsgEvent response = plugin.sendRPC(request);
+            if (response == null)
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
+                        MediaType.APPLICATION_JSON_TYPE).build();
+            String info = "{}";
+            if (response.getParam("gpipeline") != null)
+                info = response.getCompressedParam("gpipeline");
+            return Response.ok(info, MediaType.APPLICATION_JSON_TYPE).build();
+        } catch (Exception e) {
+            if (plugin != null)
+                logger.error("nodeInfo({}) : {}", inode_id, resource_id, e.getMessage());
+            return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+        }
+    }
+
+    @GET
     @Path("export/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response export(@PathParam("id") String id) {
