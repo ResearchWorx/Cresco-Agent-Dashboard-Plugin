@@ -139,6 +139,10 @@
                         }).complete(function(nodeResponse) {
                             var nodeData = nodeResponse['responseJSON'];
                             console.log(nodeData);
+                            if (nodeData.isassignmentresourceinfo === null) {
+                                alert('Node data currently unavailable. Check back later.');
+                                return;
+                            }
                             var tmpId = guid();
                             var nodeBody = "";
                             nodeBody += "<div class='row'>";
@@ -162,6 +166,16 @@
                             nodeBody += "<dl>";
                             nodeBody += "<dt>Memory</dt><dd>Average: " + humanFileSize(nodeData.isassignmentresourceinfo.memAve, false) + " / Max: " + humanFileSize(nodeData.isassignmentresourceinfo.memMax, false) + "</dd>";
                             nodeBody += "</dl>";
+                            nodeBody += "</div>";
+                            nodeBody += "</div>";
+                            nodeBody += "</div>";
+                            nodeBody += "<div class='row'>";
+                            nodeBody += "<div class='col-md-12'>";
+                            nodeBody += "<div class='card'>";
+                            nodeBody += "<div class='card-block'>";
+                            nodeBody += "<div class='card-title-block'><h3 class='title'>Node Raw Output</h3></div>";
+                            nodeBody += "<pre width='100%' style='overflow-x: auto'>" + syntaxHighlight(JSON.stringify(nodeData, undefined, 4)) + "</pre>";
+                            nodeBody += "</div>";
                             nodeBody += "</div>";
                             nodeBody += "</div>";
                             nodeBody += "</div>";
@@ -264,6 +278,8 @@
                 } else if (/null/.test(match)) {
                     cls = 'null';
                 }
+                if (match.length > 100)
+                    match = match.substr(0, 100);
                 return '<span class="' + cls + '">' + match + '</span>';
             });
         }
