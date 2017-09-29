@@ -24,7 +24,11 @@ public class Plugin extends CPlugin {
 
     public void start() {
         setExec(new Executor(this));
-        server = startServer("http://[::]:" + config.getStringParam("port", "3445") + "/");
+        try {
+            server = startServer("http://[::]:" + config.getStringParam("port", "3445") + "/");
+        } catch(Exception ex) {
+            server = startServer("http://0.0.0.0:" + config.getStringParam("port", "3445") + "/");
+        }
         logger.info("Server up");
     }
 
