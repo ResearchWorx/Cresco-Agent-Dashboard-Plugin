@@ -20,6 +20,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Calendar;
 
+
 @Provider
 public class AuthenticationFilter implements ContainerRequestFilter {
     public static final String SESSION_COOKIE_NAME = "crescoAgentSessionID";
@@ -60,6 +61,13 @@ public class AuthenticationFilter implements ContainerRequestFilter {
             Method method = resourceInfo.getResourceMethod();
             if (method.isAnnotationPresent(PermitAll.class))
                 return;
+
+            // Then check is the service key exists and is valid.
+            String serviceKey = requestContext.getHeaderString("X-Auth-API-Service-Key");
+            if (serviceKey != null) {
+                return;
+            }
+
             Cookie sessionCookie = requestContext.getCookies().get(SESSION_COOKIE_NAME);
             if (sessionCookie == null) {
                 NewCookie redirectCookie = new NewCookie(RootController.LOGIN_REDIRECT_COOKIE_NAME, "/" + requestContext.getUriInfo().getPath(), null, null, null, 60 * 60, false);
