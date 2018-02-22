@@ -72,6 +72,10 @@ public class RegionsController {
             request.setParam("src_agent", plugin.getAgent());
             request.setParam("src_plugin", plugin.getPluginID());
             request.setParam("dst_region", plugin.getRegion());
+            request.setParam("dst_agent", plugin.getAgent());
+            request.setParam("dst_plugin", "plugin/0");
+            request.setParam("is_regional", Boolean.TRUE.toString());
+            request.setParam("is_global", Boolean.TRUE.toString());
             request.setParam("globalcmd", Boolean.TRUE.toString());
             request.setParam("action", "listregions");
             MsgEvent response = plugin.sendRPC(request);
