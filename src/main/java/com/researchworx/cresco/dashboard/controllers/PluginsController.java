@@ -78,6 +78,10 @@ public class PluginsController {
             request.setParam("src_agent", plugin.getAgent());
             request.setParam("src_plugin", plugin.getPluginID());
             request.setParam("dst_region", plugin.getRegion());
+            request.setParam("dst_agent", plugin.getAgent());
+            request.setParam("dst_plugin", "plugin/0");
+            request.setParam("is_regional", Boolean.TRUE.toString());
+            request.setParam("is_global", Boolean.TRUE.toString());
             request.setParam("globalcmd", "true");
             request.setParam("action", "plugininfo");
             request.setParam("action_region", region);
@@ -112,6 +116,10 @@ public class PluginsController {
             request.setParam("src_agent", plugin.getAgent());
             request.setParam("src_plugin", plugin.getPluginID());
             request.setParam("dst_region", plugin.getRegion());
+            request.setParam("dst_agent", plugin.getAgent());
+            request.setParam("dst_plugin", "plugin/0");
+            request.setParam("is_regional", Boolean.TRUE.toString());
+            request.setParam("is_global", Boolean.TRUE.toString());
             request.setParam("globalcmd", "true");
             request.setParam("action", "listplugins");
             MsgEvent response = plugin.sendRPC(request);
@@ -143,6 +151,10 @@ public class PluginsController {
             request.setParam("src_agent", plugin.getAgent());
             request.setParam("src_plugin", plugin.getPluginID());
             request.setParam("dst_region", plugin.getRegion());
+            request.setParam("dst_agent", plugin.getAgent());
+            request.setParam("dst_plugin", "plugin/0");
+            request.setParam("is_regional", Boolean.TRUE.toString());
+            request.setParam("is_global", Boolean.TRUE.toString());
             request.setParam("globalcmd", "true");
             request.setParam("action", "listplugins");
             request.setParam("action_region", region);
@@ -176,6 +188,10 @@ public class PluginsController {
             request.setParam("src_agent", plugin.getAgent());
             request.setParam("src_plugin", plugin.getPluginID());
             request.setParam("dst_region", plugin.getRegion());
+            request.setParam("dst_agent", plugin.getAgent());
+            request.setParam("dst_plugin", "plugin/0");
+            request.setParam("is_regional", Boolean.TRUE.toString());
+            request.setParam("is_global", Boolean.TRUE.toString());
             request.setParam("globalcmd", "true");
             request.setParam("action", "listplugins");
             request.setParam("action_region", region);
