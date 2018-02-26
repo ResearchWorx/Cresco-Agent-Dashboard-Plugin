@@ -61,4 +61,11 @@ public class GlobalController {
                     MediaType.APPLICATION_JSON_TYPE).build();
         }
     }
+
+
+    /*
+    String dbexport = plugin.getGDB().gdb.getDBExportAll();
+            logger.error(plugin.getGDB().gdb.stringUncompress(dbexport));
+     */
+
 }
