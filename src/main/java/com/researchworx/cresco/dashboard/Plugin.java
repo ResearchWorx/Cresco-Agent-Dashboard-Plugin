@@ -74,6 +74,7 @@ public class Plugin extends CPlugin {
     }
 
     public static void main(String[] args) throws IOException {
+
         final String BASE_URI = "http://[::]:3445/";
         final OutputStream nullOutputStream = new OutputStream() { @Override public void write(int b) { } };
         Logger.getLogger("").addHandler(new ConsoleHandler() {{ setOutputStream(nullOutputStream); }});
