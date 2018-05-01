@@ -152,73 +152,57 @@
             }).complete(function(data) {
                 agent_info_modal_title.html("Resources: <br>" + region + "<br>" + agent);
                 var json = data['responseJSON'];
-                console.log(json);
-                var agentJSON = json.agentresourceinfo[0];
+                //console.log(json);
+                var agentJSON = JSON.parse(json.agentresourceinfo[0].perf);
+                console.log(agentJSON);
                 var system = {};
-                system.family = agentJSON['sys-family'];
-                system.manufacturer = agentJSON['sys-manufacturer'];
-                system.os = agentJSON['sys-os'];
-                if (agentJSON.is64bit === 'true')
+                system.family = agentJSON.os[0]['sys-family'];
+                system.manufacturer = agentJSON.os[0]['sys-manufacturer'];
+                system.os = agentJSON.os[0]['sys-os'];
+                if (agentJSON.cpu[0].is64bit === 'true')
                     system.architecture = '64-bit';
                 else
                     system.architecture = '32-bit';
-                system.uptime = secondsToStr(parseInt(agentJSON['sys-uptime']));
+                system.uptime = secondsToStr(parseInt(agentJSON.os[0]['sys-uptime']));
                 console.log(system);
                 var cpu = {};
-                cpu.ident = agentJSON['cpu-ident'];
-                cpu.summary = agentJSON['cpu-summary'];
+                cpu.ident = agentJSON.cpu[0]['cpu-ident'];
+                cpu.summary = agentJSON.cpu[0]['cpu-summary'];
                 cpu.cores = {};
-                cpu.cores.physical = parseInt(agentJSON['cpu-physical-count']);
-                cpu.cores.logical = parseInt(agentJSON['cpu-logical-count']);
+                cpu.cores.physical = parseInt(agentJSON.cpu[0]['cpu-physical-count']);
+                cpu.cores.logical = parseInt(agentJSON.cpu[0]['cpu-logical-count']);
                 cpu.load = {};
-                cpu.load.idle = parseFloat(agentJSON['cpu-idle-load']);
-                cpu.load.nice = parseFloat(agentJSON['cpu-nice-load']);
-                cpu.load.user = parseFloat(agentJSON['cpu-user-load']);
-                cpu.load.system = parseFloat(agentJSON['cpu-sys-load']);
+                cpu.load.idle = parseFloat(agentJSON.cpu[0]['cpu-idle-load']);
+                cpu.load.nice = parseFloat(agentJSON.cpu[0]['cpu-nice-load']);
+                cpu.load.user = parseFloat(agentJSON.cpu[0]['cpu-user-load']);
+                cpu.load.system = parseFloat(agentJSON.cpu[0]['cpu-sys-load']);
                 console.log(cpu);
                 var memory = {};
-                memory.available = parseInt(agentJSON['memory-available']);
-                memory.total = parseInt(agentJSON['memory-total']);
+                memory.available = parseInt(agentJSON.mem[0]['memory-available']);
+                memory.total = parseInt(agentJSON.mem[0]['memory-total']);
                 console.log(memory);
                 var fs = [];
-                if (agentJSON.hasOwnProperty('fs-map')) {
-                    var tmp_fs = agentJSON['fs-map'].split(",");
-                    $.each(tmp_fs, function (i, v) {
-                        var fs_ident = v.split(":");
-                        var tmp_fs_object = {};
-                        tmp_fs_object.name = fs_ident[1];
-                        tmp_fs_object.total = parseInt(agentJSON['fs-' + fs_ident[0] + '-total']);
-                        tmp_fs_object.available = parseInt(agentJSON['fs-' + fs_ident[0] + '-available']);
-                        fs[fs_ident[0]] = tmp_fs_object;
-                    });
-                } else if (agentJSON.hasOwnProperty('disk-map')) {
-                    var tmp_fs = agentJSON['disk-map'].split(",");
-                    $.each(tmp_fs, function (i, v) {
-                        var fs_ident = v.split(":");
-                        var tmp_fs_object = {};
-                        tmp_fs_object.name = fs_ident[1];
-                        tmp_fs_object.total = parseInt(agentJSON['disk-' + fs_ident[0] + '-total']);
-                        tmp_fs_object.available = parseInt(agentJSON['disk-' + fs_ident[0] + '-available']);
-                        fs[fs_ident[0]] = tmp_fs_object;
-                    });
-                }
+                $.each(agentJSON.fs, function(i, v) {
+                    var tmp_fs = {};
+                    tmp_fs.name = agentJSON.fs[i].name;
+                    tmp_fs.uuid = agentJSON.fs[i].uuid;
+                    tmp_fs.description = agentJSON.fs[i].description;
+                    tmp_fs.total = parseInt(agentJSON.fs[i]['total-space']);
+                    tmp_fs.available = parseInt(agentJSON.fs[i]['available-space']);
+                    fs.push(tmp_fs);
+                });
                 console.log(fs);
                 var nics = [];
-                var tmp_nics = agentJSON['nic-map'].split(",");
-                $.each(tmp_nics, function (i, v) {
-                    var nic_ident = v.split(":");
-                    if (nic_ident[1].indexOf("tun") > -1)
-                        return;
+                $.each(agentJSON.net, function (i, v) {
+                    var nic_info = agentJSON.net[i];
                     var tmp_nic_object = {};
-                    tmp_nic_object.name = nic_ident[1];
-                    var tmp_nic_ips = agentJSON['nic-' + nic_ident[0] + '-ip'].split(",");
-                    if (tmp_nic_ips.length > 1) {
-                        tmp_nic_object.ipv6 = tmp_nic_ips[0];
-                        tmp_nic_object.ipv4 = tmp_nic_ips[1];
-                    } else
-                        tmp_nic_object.ipv4 = tmp_nic_ips[0];
-                    tmp_nic_object.mtu = parseInt(agentJSON['nic-' + nic_ident[0] + '-mtu']);
-                    nics[nic_ident[0]] = tmp_nic_object;
+                    tmp_nic_object.name = nic_info['interface-name'];
+                    var tmp_ipv4 = nic_info['ipv4-addresses'].replace(/[\[\]\"]/g, "");
+                    tmp_nic_object.ipv4 = tmp_ipv4.split(",");
+                    var tmp_ipv6 = nic_info['ipv6-addresses'].replace(/[\[\]\"]/g, "");
+                    tmp_nic_object.ipv6 = tmp_ipv6.split(",");
+                    tmp_nic_object.mtu = parseInt(nic_info['mtu']);
+                    nics.push(tmp_nic_object);
                 });
                 console.log(nics);
                 var body = "";
@@ -257,9 +241,6 @@
                 body += "<div class='col-md-12'><div class='card'><div class='card-block'><div class='card-title-block'><h3 class='title'>Agent Memory Usage</h3></div><section class='example'><div id='agent-info-modal-body-memory'></div></section></div></div></div>";
                 body += "</div>";
                 body += "</div>";
-                /*body += "<div class='row'><div class='col-xs-12'><pre>" +
-                    syntaxHighlight(JSON.stringify(agentJSON, undefined, 4)) +
-                    "</pre></div></div>";*/
                 agent_info_modal_body.html(body);
                 agent_info_modal.on('shown.bs.modal', function(e) {
                     $('#agent-info-modal-body-cpu').empty();
