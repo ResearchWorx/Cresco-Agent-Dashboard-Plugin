@@ -154,7 +154,7 @@ public class ApplicationsController {
                 return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
                         MediaType.APPLICATION_JSON_TYPE).build();
             String info = "{}";
-            if (response.getParam("gpipeline") != null)
+            if (response.getParam("action_gpipeline") != null)
                 info = response.getCompressedParam("gpipeline");
             return Response.ok(info, MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
