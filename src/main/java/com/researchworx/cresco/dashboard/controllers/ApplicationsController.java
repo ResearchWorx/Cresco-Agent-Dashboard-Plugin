@@ -155,7 +155,7 @@ public class ApplicationsController {
                         MediaType.APPLICATION_JSON_TYPE).build();
             String info = "{}";
             if (response.getParam("action_gpipeline") != null)
-                info = response.getCompressedParam("gpipeline");
+                info = response.getCompressedParam("action_gpipeline");
             return Response.ok(info, MediaType.APPLICATION_JSON_TYPE).build();
         } catch (Exception e) {
             if (plugin != null)
