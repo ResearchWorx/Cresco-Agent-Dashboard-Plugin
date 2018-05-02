@@ -1,5 +1,6 @@
 package com.researchworx.cresco.dashboard.controllers;
 
+import com.google.gson.Gson;
 import com.mitchellbosecke.pebble.PebbleEngine;
 import com.mitchellbosecke.pebble.error.PebbleException;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
@@ -17,18 +18,26 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Path("agents")
 public class AgentsController {
     private static Plugin plugin = null;
     private static CLogger logger = null;
+    private static Gson gson = null;
 
     public static void connectPlugin(Plugin inPlugin) {
         plugin = inPlugin;
         logger = new CLogger(AgentsController.class, plugin.getMsgOutQueue(), plugin.getRegion(),
                 plugin.getAgent(), plugin.getPluginID(), CLogger.Level.Trace);
+        gson = new Gson();
     }
 
     @GET
@@ -169,4 +178,83 @@ public class AgentsController {
             return Response.ok("{\"regions\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
         }
     }
+
+    @GET
+    @Path("getfreeport/{region}/{agent}/{count}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getfreeport(@PathParam("region") String region,
+                              @PathParam("agent") String agent,
+                                @PathParam("count") String count){
+        logger.trace("Call to resources({}, {})", region, agent);
+        try {
+            if (plugin == null)
+                return Response.ok("{\"ports\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
+
+            //todo this needs to be processed through the global controller no in this plugin
+            InetAddress addr = InetAddress.getLocalHost();
+            String ip = addr.getHostAddress();
+            Map<String,List<Map<String,String>>> portMap = new HashMap<>();
+            List<Map<String,String>> portList = new ArrayList<>();
+
+            for(int i = 0; i < Integer.parseInt(count); i++) {
+                int port = getPort();
+                if(port != -1) {
+                    Map<String,String> tmpP = new HashMap<>();
+                    tmpP.put("ip",ip);
+                    tmpP.put("port",String.valueOf(port));
+                    portList.add(tmpP);
+                }
+            }
+
+            portMap.put("ports",portList);
+
+            String freeports = gson.toJson(portMap);
+            return Response.ok(freeports, MediaType.APPLICATION_JSON_TYPE).build();
+
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            if (plugin != null)
+                logger.error("resources({}, {}) : {}", region, agent, sw.toString());
+            return Response.ok("{\"ports\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
+        }
+    }
+
+    public int getPort() {
+
+        int freePort = -1;
+
+        boolean isFree = false;
+
+        while (!isFree) {
+            int port = ThreadLocalRandom.current().nextInt(10000, 30000 + 1);
+            ServerSocket ss = null;
+            DatagramSocket ds = null;
+            try {
+                ss = new ServerSocket(port);
+                ss.setReuseAddress(true);
+                ds = new DatagramSocket(port);
+                ds.setReuseAddress(true);
+                isFree = true;
+                freePort = port;
+
+            } catch (IOException e) {
+            } finally {
+                if (ds != null) {
+                    ds.close();
+                }
+
+                if (ss != null) {
+                    try {
+                        ss.close();
+                    } catch (IOException e) {
+                /* should not be thrown */
+                    }
+                }
+            }
+        }
+        return freePort;
+    }
+
 }
