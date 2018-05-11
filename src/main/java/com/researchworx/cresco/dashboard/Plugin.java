@@ -9,9 +9,11 @@ import com.researchworx.cresco.library.plugin.core.CPlugin;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.grizzly.http.server.StaticHttpHandler;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
@@ -22,9 +24,12 @@ import java.util.logging.Logger;
 public class Plugin extends CPlugin {
     private HttpServer server;
 
+    public String repoPath = null;
+
     public void start() {
         setExec(new Executor(this));
         try {
+            repoPath = getRepoPath();
             server = startServer("http://[::]:" + config.getStringParam("port", "3445") + "/");
         } catch(Exception ex) {
             server = startServer("http://0.0.0.0:" + config.getStringParam("port", "3445") + "/");
@@ -70,9 +75,26 @@ public class Plugin extends CPlugin {
         HttpServer server =  GrizzlyHttpServerFactory.createHttpServer(URI.create(baseURI), rc);
         HttpHandler handler = new CLStaticHttpHandler(Plugin.class.getClassLoader(), "includes/");
         server.getServerConfiguration().addHttpHandler(handler, "/includes");
+        //allow downloads in repo dir
+        if(repoPath != null) {
+            StaticHttpHandler staticHttpHandler = new StaticHttpHandler(repoPath);
+            server.getServerConfiguration().addHttpHandler(staticHttpHandler, "/repository");
+        }
+
         return server;
     }
 
+    private String getRepoPath() {
+        String path = null;
+        try {
+            //todo create seperate director for repo
+            path = new File(Plugin.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent();
+
+        } catch(Exception ex) {
+            logger.error(ex.getMessage());
+        }
+        return path;
+    }
     public static void main(String[] args) throws IOException {
 
         final String BASE_URI = "http://[::]:3445/";
