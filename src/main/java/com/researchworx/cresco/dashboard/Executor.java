@@ -70,6 +70,7 @@ public class Executor extends CExecutor {
             contactMap = new ArrayList<>();
             String port = plugin.getConfig().getStringParam("port", "3445");
             String protocol = "http";
+            String path = "/repository";
 
                 List<InterfaceAddress> interfaceAddressList = new ArrayList<>();
 
@@ -94,6 +95,7 @@ public class Executor extends CExecutor {
                     serverMap.put("protocol", protocol);
                     serverMap.put("ip", hostAddress);
                     serverMap.put("port", port);
+                    serverMap.put("path", path);
                     contactMap.add(serverMap);
 
                 }
@@ -110,18 +112,20 @@ public class Executor extends CExecutor {
             serverMap.put("protocol", protocol);
             serverMap.put("ip", hostAddress);
             serverMap.put("port", port);
+            serverMap.put("path", path);
 
             contactMap.remove(contactMap.indexOf(serverMap));
             contactMap.add(0,serverMap);
 
             //Use env var for host with hidden external addresses
             String externalIp = plugin.getConfig().getStringParam("externalip");
-            externalIp = "128.163.202.50";
+            //externalIp = "128.163.202.50";
             if(externalIp != null) {
                 Map<String, String> serverMapExternal = new HashMap<>();
                 serverMapExternal.put("protocol", protocol);
                 serverMapExternal.put("ip", externalIp);
                 serverMapExternal.put("port", port);
+                serverMapExternal.put("path", path);
                 contactMap.add(0,serverMapExternal);
             }
 
