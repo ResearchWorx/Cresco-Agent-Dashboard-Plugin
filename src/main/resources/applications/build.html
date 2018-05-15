@@ -3,11 +3,188 @@
 {% block title %}Build New Application{% endblock %}
 
 {% block pagecss %}
+<link rel="stylesheet" href="/includes/css/force.css">
+<link rel="stylesheet" href="/includes/css/context-menu.css">
+<link rel="stylesheet" href="/includes/css/menu.css">
 {% endblock %}
 
 {% block pagecontent %}
-
+                <div id='app-row' class="row" style="position:  absolute;left: 300px;right: 70px;bottom: 70px;top: 110px;">
+                    <div class="card card-outline-primary" style="height: 100%;margin: 0;padding: 0;">
+                        <div class="card-header bordered">
+                            <div class="header-block">
+                                <h2 class="cresco-list-title">Application Builder</h2>
+                            </div>
+                        </div>
+                        <div id="workspace" class="card-block" style="height: 90%;margin: 0;padding: 0;"></div>
+                    </div>
+                </div>
+                <div class="modal fade" id="edit-plugin-modal">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                    <span class="sr-only">Close</span>
+                                </button>
+                                <h4 class="modal-title" id="edit-plugin-modal-title"></h4>
+                            </div>
+                            <div class="modal-body" id="edit-plugin-modal-body"></div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" onclick="cancelUpdatePlugin();">Close</button>
+                                <button type="button" class="btn btn-success" onclick="updatePlugin();">Save Changes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 {% endblock %}
 
 {% block pagejs %}
+    <script type="text/javascript" src="/includes/js/d3.v3.min.js"></script>
+    <script type="text/javascript" src="/includes/js/context-menu.js"></script>
+    <script type="text/javascript" src="/includes/js/menu.js"></script>
+    <script type="text/javascript" src="/includes/js/force.js"></script>
+    <script type="text/javascript">
+        var pluginData = {};
+
+        $(function() {
+            $.getJSON('/plugins/listrepo', function(data) {
+                pluginData = data;
+            });
+        });
+
+        function generateTooltip(d) {
+            var tooltip_html = "<div id='node-tooltip-title'>" + d.title + "</div>";
+            tooltip_html += "<b>Plugin Name</b>: " + d.params.pluginname + "<br>";
+            tooltip_html += "<b>Plugin Jarfile</b>: " + d.params.jarfile + "<br>";
+            tooltip_html += "<b>Plugin Version</b>: " + d.params.version + "<br>";
+            tooltip_html += "<b>Plugin MD5 Hash</b>: " + d.params.md5 + "<br>";
+            return tooltip_html;
+        }
+
+        function editplugin(d) {
+            var node = nodes[d.data.node.index];
+            //if (node.params === 'undefined')
+            //    node.params = {};
+            $('#edit-plugin-modal-title').html("Editting " + node.title);
+            var modalBody = $('#edit-plugin-modal-body');
+            modalBody.append("<input type='hidden' id='edit-plugin-index' value='" + node.index + "' /><br>");
+            var pluginList = "<select id='edit-plugin-selected-plugin'><option value='-1'>-- Select Plugin --</option>";
+            $.each(pluginData.plugins, function(i, v) {
+                pluginList += "<option value='" + i + "'";
+                if (v.pluginname == node.params.pluginname) {
+                    pluginList += " selected ";
+                }
+                pluginList += ">" + v.pluginname + "</option>";
+            });
+            pluginList += "</select><br>";
+            modalBody.append(pluginList);
+            modalBody.append("Plugin Name: <input class='form-control' id='edit-plugin-pluginname' type='text' disabled value='" + node.params.pluginname + "' /><br>");
+            modalBody.append("Plugin Jarfile: <input class='form-control' id='edit-plugin-jarfile' type='text' disabled value='" + node.params.jarfile + "' /><br>");
+            modalBody.append("Plugin Version: <input class='form-control' id='edit-plugin-version' type='text' disabled value='" + node.params.version + "' /><br>");
+            modalBody.append("Plugin MD5 Hash: <input class='form-control' id='edit-plugin-md5' type='text' disabled value='" + node.params.md5 + "' /><br>");
+            $('#edit-plugin-selected-plugin').change(function() {
+                var pluginname = $('#edit-plugin-pluginname');
+                pluginname.val('');
+                var jarfile = $('#edit-plugin-jarfile');
+                jarfile.val('');
+                var version = $('#edit-plugin-version');
+                version.val('');
+                var md5hash = $('#edit-plugin-md5');
+                md5hash.val('');
+                var pluginID = $('#edit-plugin-selected-plugin').val();
+                if (pluginID > -1) {
+                    var pluginInfo = pluginData.plugins[pluginID];
+                    pluginname.val(pluginInfo.pluginname);
+                    jarfile.val(pluginInfo.jarfile);
+                    version.val(pluginInfo.version);
+                    md5hash.val(pluginInfo.md5);
+                }
+            });
+            $('#edit-plugin-modal').modal('show');
+        }
+
+        function deleteplugin(d) {
+            if(selected_node) {
+                nodes.splice(nodes.indexOf(selected_node), 1);
+                spliceLinksForNode(selected_node);
+            } else if(selected_link) {
+                links.splice(links.indexOf(selected_link), 1);
+            }
+            selected_link = null;
+            selected_node = null;
+            tooltip.style('visibility', 'hidden');
+            clearTimeout(tooltip_show);
+            restart();
+        }
+
+        function cancelUpdatePlugin() {
+            resetModal();
+        }
+
+        function updatePlugin() {
+            var index = $('#edit-plugin-index').val();
+            var node = nodes[index];
+            node.params.pluginname = $('#edit-plugin-pluginname').val();
+            node.params.jarfile = $('#edit-plugin-jarfile').val();
+            node.params.version = $('#edit-plugin-version').val();
+            node.params.md5 = $('#edit-plugin-md5').val();
+            restart();
+            resetModal();
+        }
+
+        function resetModal() {
+            $('#edit-plugin-modal').modal('hide');
+            $('#edit-plugin-modal-title').html('');
+            $('#edit-plugin-modal-body').html('');
+            if (active_menu != null)
+                active_menu.hide();
+            active_menu = null;
+            active_menu_node = null;
+            selected_link = null;
+            selected_node = null;
+            tooltip.style('visibility', 'hidden');
+            clearTimeout(tooltip_show);
+            restart();
+        }
+
+        function generateCADL() {
+            var cadl = {};
+            cadl['pipeline_id'] = '0';
+            cadl['pipeline_name'] = 'demo_pipeline';
+            cadl['nodes'] = [];
+            $.each(nodes, function(i, v) {
+                var node = {
+                    'type': 'some_type',
+                    'node_name': v.title,
+                    'node_id': v.id,
+                    'isSource': false,
+                    'workloadUtil': 0.0,
+                    'params': v.params
+                };
+                cadl['nodes'].push(node);
+            });
+            cadl['edges'] = [];
+            $.each(links, function(i, v) {
+                if (v.right) {
+                    var edge = {
+                        'edge_id': '0',
+                        'node_from': v.source.id,
+                        'node_to': v.target.id
+                    };
+                    cadl['edges'].push(edge);
+                }
+                if (v.left) {
+                    var edge = {
+                        'edge_id': '0',
+                        'node_from': v.target.id,
+                        'node_to': v.source.id
+                    };
+                    cadl['edges'].push(edge);
+                }
+            });
+            $('#edit-plugin-modal-body').html('<pre>' + JSON.stringify(cadl, null, '\t') + '</pre>');
+            $('#edit-plugin-modal').modal('show');
+        }
+    </script>
 {% endblock %}

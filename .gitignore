@@ -1,5 +1,7 @@
+.DS_Store
 .idea
 *.iml
 *.ini
 *.db
 /target
+hs_err_pid*

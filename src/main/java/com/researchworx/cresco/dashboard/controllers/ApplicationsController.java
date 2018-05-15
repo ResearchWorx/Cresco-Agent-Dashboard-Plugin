@@ -88,7 +88,33 @@ public class ApplicationsController {
         }
     }
 
+    @GET
+    @Path("build")
+    @Produces(MediaType.TEXT_HTML)
+    public Response build(@CookieParam(AuthenticationFilter.SESSION_COOKIE_NAME) String sessionID) {
+        try {
+            LoginSession loginSession = LoginSessionService.getByID(sessionID);
+            PebbleEngine engine = new PebbleEngine.Builder().build();
+            PebbleTemplate compiledTemplate = engine.getTemplate("applications/build.html");
 
+            Map<String, Object> context = new HashMap<>();
+            if (loginSession != null)
+                context.put("user", loginSession.getUsername());
+            context.put("section", "applications");
+            context.put("page", "build");
+
+            Writer writer = new StringWriter();
+            compiledTemplate.evaluate(writer, context);
+
+            return Response.ok(writer.toString()).build();
+        } catch (PebbleException e) {
+            return Response.ok("PebbleException: " + e.getMessage()).build();
+        } catch (IOException e) {
+            return Response.ok("IOException: " + e.getMessage()).build();
+        } catch (Exception e) {
+            return Response.ok("Server error: " + e.getMessage()).build();
+        }
+    }
 
     @GET
     @Path("list")
