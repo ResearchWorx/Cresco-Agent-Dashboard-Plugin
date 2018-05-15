@@ -211,6 +211,82 @@ public class PluginsController {
         }
     }
 
+    //listpluginsrepo
+
+
+    @GET
+    @Path("listbytype/{id}/{value}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listByPluginType(@PathParam("id") String actionPluginTypeId,
+                                @PathParam("value") String actionpluginTypeValue) {
+        logger.trace("Call to listByPluginType({}, {})", actionPluginTypeId, actionpluginTypeValue);
+        try {
+            if (plugin == null)
+                return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+            MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+                    plugin.getPluginID(), "Plugin List by Type Request");
+            request.setParam("src_region", plugin.getRegion());
+            request.setParam("src_agent", plugin.getAgent());
+            request.setParam("src_plugin", plugin.getPluginID());
+            request.setParam("dst_region", plugin.getRegion());
+            request.setParam("dst_agent", plugin.getAgent());
+            request.setParam("dst_plugin", "plugin/0");
+            request.setParam("is_regional", Boolean.TRUE.toString());
+            request.setParam("is_global", Boolean.TRUE.toString());
+            request.setParam("globalcmd", "true");
+            request.setParam("action", "listpluginsbytype");
+            request.setParam("action_plugintype_id", actionPluginTypeId);
+            request.setParam("action_plugintype_value", actionpluginTypeValue);
+            MsgEvent response = plugin.sendRPC(request);
+            if (response == null)
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
+                        MediaType.APPLICATION_JSON_TYPE).build();
+            String plugins = "[]";
+            if (response.getParam("pluginsbytypelist") != null)
+                plugins = response.getCompressedParam("pluginsbytypelist");
+            return Response.ok(plugins, MediaType.APPLICATION_JSON_TYPE).build();
+        } catch (Exception e) {
+            if (plugin != null)
+                logger.error("listByPluginType {}, {}) : {}", actionPluginTypeId, actionpluginTypeValue, e.getMessage());
+            return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+        }
+    }
+
+    @GET
+    @Path("listrepo")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listRepo() {
+        logger.trace("Call to listRepo()");
+        try {
+            if (plugin == null)
+                return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+            MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+                    plugin.getPluginID(), "Plugin List by Type Request");
+            request.setParam("src_region", plugin.getRegion());
+            request.setParam("src_agent", plugin.getAgent());
+            request.setParam("src_plugin", plugin.getPluginID());
+            request.setParam("dst_region", plugin.getRegion());
+            request.setParam("dst_agent", plugin.getAgent());
+            request.setParam("dst_plugin", "plugin/0");
+            request.setParam("is_regional", Boolean.TRUE.toString());
+            request.setParam("is_global", Boolean.TRUE.toString());
+            request.setParam("globalcmd", "true");
+            request.setParam("action", "listpluginsrepo");
+            MsgEvent response = plugin.sendRPC(request);
+            if (response == null)
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
+                        MediaType.APPLICATION_JSON_TYPE).build();
+            String plugins = "[]";
+            if (response.getParam("listpluginsrepo") != null)
+                plugins = response.getCompressedParam("listpluginsrepo");
+            return Response.ok(plugins, MediaType.APPLICATION_JSON_TYPE).build();
+        } catch (Exception e) {
+            if (plugin != null)
+                logger.error("listByPluginType ) : {}", e.getMessage());
+            return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+        }
+    }
+
     @GET
     @Path("local")
     @Produces(MediaType.APPLICATION_JSON)
