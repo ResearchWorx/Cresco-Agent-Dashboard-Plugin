@@ -128,7 +128,7 @@ public class Executor extends CExecutor {
                 serverMapExternal.put("path", path);
                 contactMap.add(0,serverMapExternal);
             }
-
+//test
         } catch (Exception ex) {
             logger.error("getNetworkAddresses ", ex.getMessage());
         }
