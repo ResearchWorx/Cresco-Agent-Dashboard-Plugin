@@ -1,5 +1,6 @@
 package com.researchworx.cresco.dashboard.controllers;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -12,13 +13,12 @@ import com.researchworx.cresco.dashboard.models.LoginSession;
 import com.researchworx.cresco.dashboard.services.LoginSessionService;
 import com.researchworx.cresco.library.messaging.MsgEvent;
 import com.researchworx.cresco.library.utilities.CLogger;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.*;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,11 +28,14 @@ import java.util.Scanner;
 public class PluginsController {
     private static Plugin plugin = null;
     private static CLogger logger = null;
+    private static Gson gson;
+
 
     public static void connectPlugin(Plugin inPlugin) {
         plugin = inPlugin;
         logger = new CLogger(PluginsController.class, plugin.getMsgOutQueue(), plugin.getRegion(), plugin.getAgent(),
                 plugin.getPluginID(), CLogger.Level.Trace);
+        gson = new Gson();
     }
 
     @GET
@@ -251,6 +254,62 @@ public class PluginsController {
             return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
         }
     }
+
+    @POST
+    @Path("/uploadplugin")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response uploadFile(
+            @FormDataParam("file") InputStream uploadedInputStream , @FormDataParam("pluginname") String pluginName, @FormDataParam("jarfile") String jarFile) {
+
+        try {
+            String filePath = plugin.repoPath + "/" + jarFile;
+
+            File pluginFileObject = new File(filePath);
+            if (pluginFileObject.exists()) {
+                pluginFileObject.delete();
+            }
+
+            if(saveToFile(uploadedInputStream, filePath)) {
+                Map<String,String> response = new HashMap<>();
+                response.put("pluginname",pluginName);
+                response.put("jarfile",jarFile);
+                return Response.ok(gson.toJson(response), MediaType.APPLICATION_JSON_TYPE).build();
+            } else {
+                return Response.ok("{\"error\":\"Failed to Save File\"}",
+                        MediaType.APPLICATION_JSON_TYPE).build();
+            }
+
+        } catch(Exception ex){
+            return Response.ok("{\"error\":\"" + ex.toString() + "\"}",
+                    MediaType.APPLICATION_JSON_TYPE).build();
+        }
+
+    }
+
+    // save uploaded file to new location
+    private boolean saveToFile(InputStream uploadedInputStream,
+                            String uploadedFileLocation) {
+        boolean isSaved = false;
+        try {
+            OutputStream out = null;
+            int read = 0;
+            byte[] bytes = new byte[1024];
+
+            out = new FileOutputStream(new File(uploadedFileLocation));
+            while ((read = uploadedInputStream.read(bytes)) != -1) {
+                out.write(bytes, 0, read);
+            }
+            out.flush();
+            out.close();
+            isSaved = true;
+        } catch (IOException e) {
+
+            e.printStackTrace();
+        }
+        return isSaved;
+    }
+
 
     @GET
     @Path("listrepo")

@@ -185,34 +185,6 @@ public class Executor extends CExecutor {
         return pluginFiles;
     }
 
-    private String getPluginVersion(String jarFile) {
-        String version = null;
-        try{
-            //String jarFile = AgentEngine.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-            //logger.debug("JARFILE:" + jarFile);
-            //File file = new File(jarFile.substring(5, (jarFile.length() )));
-            File file = new File(jarFile);
-
-            boolean calcHash = true;
-            BasicFileAttributes attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-            long fileTime = attr.creationTime().toMillis();
-
-            FileInputStream fis = new FileInputStream(file);
-            @SuppressWarnings("resource")
-            JarInputStream jarStream = new JarInputStream(fis);
-            Manifest mf = jarStream.getManifest();
-
-            Attributes mainAttribs = mf.getMainAttributes();
-            version = mainAttribs.getValue("Implementation-Version");
-        }
-        catch(Exception ex)
-        {
-            ex.printStackTrace();
-
-        }
-        return version;
-    }
-
     private String getPluginName(String jarFile) {
         String version = null;
         try{
@@ -232,6 +204,34 @@ public class Executor extends CExecutor {
 
             Attributes mainAttribs = mf.getMainAttributes();
             version = mainAttribs.getValue("artifactId");
+        }
+        catch(Exception ex)
+        {
+            ex.printStackTrace();
+
+        }
+        return version;
+    }
+
+    private String getPluginVersion(String jarFile) {
+        String version = null;
+        try{
+            //String jarFile = AgentEngine.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+            //logger.debug("JARFILE:" + jarFile);
+            //File file = new File(jarFile.substring(5, (jarFile.length() )));
+            File file = new File(jarFile);
+
+            boolean calcHash = true;
+            BasicFileAttributes attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+            long fileTime = attr.creationTime().toMillis();
+
+            FileInputStream fis = new FileInputStream(file);
+            @SuppressWarnings("resource")
+            JarInputStream jarStream = new JarInputStream(fis);
+            Manifest mf = jarStream.getManifest();
+
+            Attributes mainAttribs = mf.getMainAttributes();
+            version = mainAttribs.getValue("Implementation-Version");
         }
         catch(Exception ex)
         {

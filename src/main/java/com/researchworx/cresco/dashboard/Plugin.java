@@ -11,6 +11,7 @@ import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.StaticHttpHandler;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 
 import java.io.File;
@@ -61,6 +62,7 @@ public class Plugin extends CPlugin {
                 .register(RegionsController.class)
                 .register(GlobalController.class)
                 .register(ApplicationsController.class)
+                .register(MultiPartFeature.class);
                 ;
 
         AuthenticationFilter.connectPlugin(this);
