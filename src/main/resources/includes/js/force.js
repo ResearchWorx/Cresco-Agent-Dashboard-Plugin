@@ -3,7 +3,8 @@ var width  = $('#workspace').width(),
     height = $('#workspace').height(),
     invalid_color = '#b66',
     valid_color = '#6b6',
-    node_size = 40;
+    node_size = 40,
+    editting_plugin = false;
 
 var svg = d3.select('#workspace')
     .append('svg')
@@ -366,14 +367,13 @@ function addnode(element) {
     var node = {
         id: ++lastNodeId,
         title: 'Plugin ' + lastNodeId,
-        //id: nextID,
-        //title: 'Plugin ' + nextID,
         reflexive: true,
         params: {
-            //'pluginname': 'cresco-container-plugin',
-            //'jarfile': 'cresco-container-plugin-0.1.0.jar',
-            //'version': '0.1.0.309ef0c78a20ad45fe6c4fe2d1cd9ffa8ab81289.2018-05-15T13:34:13Z',
-            //'md5': 'ef1b94e8f44ffd0ccfbe0a6431a6b344'
+            'pluginname': '',
+            'jarfile': '',
+            'version': '',
+            'md5': '',
+            'test': 'blah'
         }
     };
     node.x = point[0];
@@ -455,6 +455,7 @@ function spliceLinksForNode(node) {
 var lastKeyDown = -1;
 
 function keydown() {
+    if (editting_plugin) return;
     d3.event.preventDefault();
 
     if(lastKeyDown !== -1) return;

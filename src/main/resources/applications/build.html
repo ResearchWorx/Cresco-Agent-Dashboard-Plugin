@@ -9,14 +9,14 @@
 {% endblock %}
 
 {% block pagecontent %}
-                <div id='app-row' class="row" style="position:  absolute;left: 300px;right: 70px;bottom: 70px;top: 110px;">
+                <div id='app-row' class="row" style="position: absolute;left: 300px;right: 70px;bottom: 70px;top: 110px;">
                     <div class="card card-outline-primary" style="height: 100%;margin: 0;padding: 0;">
                         <div class="card-header bordered">
                             <div class="header-block">
                                 <h2 class="cresco-list-title">Application Builder</h2>
                             </div>
                         </div>
-                        <div id="workspace" class="card-block" style="height: 90%;margin: 0;padding: 0;"></div>
+                        <div id="workspace" class="card-block" style="position: absolute; top: 52px; left: 0px; bottom: 0px; width: 100%; padding: 0;"></div>
                     </div>
                 </div>
                 <div class="modal fade" id="edit-plugin-modal">
@@ -55,21 +55,19 @@
 
         function generateTooltip(d) {
             var tooltip_html = "<div id='node-tooltip-title'>" + d.title + "</div>";
-            tooltip_html += "<b>Plugin Name</b>: " + d.params.pluginname + "<br>";
-            tooltip_html += "<b>Plugin Jarfile</b>: " + d.params.jarfile + "<br>";
-            tooltip_html += "<b>Plugin Version</b>: " + d.params.version + "<br>";
-            tooltip_html += "<b>Plugin MD5 Hash</b>: " + d.params.md5 + "<br>";
+            for (var param in d.params) {
+                tooltip_html += "<b>" + param + "</b>: " + d.params[param] + "<br>";
+            }
             return tooltip_html;
         }
 
         function editplugin(d) {
+            editting_plugin = true;
             var node = nodes[d.data.node.index];
-            //if (node.params === 'undefined')
-            //    node.params = {};
             $('#edit-plugin-modal-title').html("Editting " + node.title);
             var modalBody = $('#edit-plugin-modal-body');
             modalBody.append("<input type='hidden' id='edit-plugin-index' value='" + node.index + "' /><br>");
-            var pluginList = "<select id='edit-plugin-selected-plugin'><option value='-1'>-- Select Plugin --</option>";
+            var pluginList = "<select class='form-control' id='edit-plugin-selected-plugin'><option value='-1'>-- Select Plugin --</option>";
             $.each(pluginData.plugins, function(i, v) {
                 pluginList += "<option value='" + i + "'";
                 if (v.pluginname == node.params.pluginname) {
@@ -79,10 +77,21 @@
             });
             pluginList += "</select><br>";
             modalBody.append(pluginList);
-            modalBody.append("Plugin Name: <input class='form-control' id='edit-plugin-pluginname' type='text' disabled value='" + node.params.pluginname + "' /><br>");
-            modalBody.append("Plugin Jarfile: <input class='form-control' id='edit-plugin-jarfile' type='text' disabled value='" + node.params.jarfile + "' /><br>");
-            modalBody.append("Plugin Version: <input class='form-control' id='edit-plugin-version' type='text' disabled value='" + node.params.version + "' /><br>");
-            modalBody.append("Plugin MD5 Hash: <input class='form-control' id='edit-plugin-md5' type='text' disabled value='" + node.params.md5 + "' /><br>");
+            for (var param in node.params) {
+                if (!node.params.hasOwnProperty(param)) continue;
+                var paramHTML = "<div class='form-group row'>";
+                if (param === "pluginname" || param === "jarfile" || param === "version" || param === "md5") {
+                    paramHTML += "<div class='col-sm-2'><input class='form-control' disabled name='edit-plugin-param-keys[]' placeholder='Parameter Key' value='" + param + "' /></div>";
+                    paramHTML += "<div class='col-sm-10'><input id='edit-plugin-" + param + "' class='form-control' disabled name='edit-plugin-param-values[]' placeholder='Parameter Value' value='" + node.params[param] + "'/></div>";
+                } else {
+                    paramHTML += "<div class='col-sm-2'><input class='form-control' name='edit-plugin-param-keys[]' placeholder='Parameter Key' value='" + param + "' /></div>";
+                    paramHTML += "<div class='col-sm-9'><input class='form-control' name='edit-plugin-param-values[]' placeholder='Parameter Value' value='" + node.params[param] + "'/></div>";
+                    paramHTML += "<button type='button' class='btn btn-danger' onclick='$(this).closest(\"div\").remove();'><i class='fa fa-trash'></i></button>";
+                }
+                paramHTML += "</div>";
+                modalBody.append(paramHTML);
+            }
+            modalBody.append("<button id='addParamBtn' type='button' class='btn btn-primary' onclick='addParamField();'><i class='fa fa-plus-square'></i> Add Parameter</button>");
             $('#edit-plugin-selected-plugin').change(function() {
                 var pluginname = $('#edit-plugin-pluginname');
                 pluginname.val('');
@@ -102,6 +111,18 @@
                 }
             });
             $('#edit-plugin-modal').modal('show');
+            $('#edit-plugin-modal').on('hidden.bs.modal', function() {
+                resetModal();
+            });
+        }
+
+        function addParamField() {
+            var paramHTML = "<div class='form-group row'>";
+            paramHTML += "<div class='col-sm-2'><input class='form-control' name='edit-plugin-param-keys[]' placeholder='Parameter Key' /></div>";
+            paramHTML += "<div class='col-sm-9'><input class='form-control' name='edit-plugin-param-values[]' placeholder='Parameter Value' /></div>";
+            paramHTML += "<button type='button' class='btn btn-danger' onclick='$(this).closest(\"div\").remove();'><i class='fa fa-trash'></i></button>";
+            paramHTML += "</div>";
+            $(paramHTML).insertBefore( $("#addParamBtn") );
         }
 
         function deleteplugin(d) {
@@ -125,15 +146,24 @@
         function updatePlugin() {
             var index = $('#edit-plugin-index').val();
             var node = nodes[index];
-            node.params.pluginname = $('#edit-plugin-pluginname').val();
-            node.params.jarfile = $('#edit-plugin-jarfile').val();
-            node.params.version = $('#edit-plugin-version').val();
-            node.params.md5 = $('#edit-plugin-md5').val();
+            var paramKeys = []
+            $('input[name^="edit-plugin-param-keys"]').each(function() {
+                paramKeys.push($(this).val());
+            });
+            var paramValues = []
+            $('input[name^="edit-plugin-param-values"]').each(function() {
+                paramValues.push($(this).val());
+            });
+            node.params = {};
+            for (var i = 0; i < paramKeys.length; i++) {
+                node.params[paramKeys[i]] = paramValues[i];
+            }
             restart();
             resetModal();
         }
 
         function resetModal() {
+            editting_plugin = false;
             $('#edit-plugin-modal').modal('hide');
             $('#edit-plugin-modal-title').html('');
             $('#edit-plugin-modal-body').html('');
