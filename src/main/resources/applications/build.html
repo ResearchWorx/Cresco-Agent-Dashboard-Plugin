@@ -17,9 +17,56 @@
                             </div>
                             <div class="header-block pull-right">
                                 <button type="button" class="btn btn-success" onclick="showAddPlugin()"><i class="fa fa-upload" aria-hidden="true"></i> Upload Plugin</button>
+                                <button type="button" class="btn btn-warning" onclick="showFAQ()"><i class="fa fa-question" aria-hidden="true"></i> Help</button>
                             </div>
                         </div>
                         <div id="workspace" class="card-block" style="position: absolute; top: 55px; left: 0px; bottom: 0px; width: 100%; padding: 0;"></div>
+                    </div>
+                </div>
+                <div class="modal fade" id="faq-modal">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                    <span class="sr-only">Close</span>
+                                </button>
+                                <h4 class="modal-title" id="faq-modal-title">Help</h4>
+                            </div>
+                            <div class="modal-body" id="faq-modal-body">
+                                <div class="row">
+                                    <div class="col-xl-12">
+                                        <div class="card card-default">
+                                            <div class="card-header">
+                                                <div class="header-block">
+                                                    <p class="title"> Adding Plugins</p>
+                                                </div>
+                                            </div>
+                                            <div class="card-block">
+                                                <p>To add a plugin to your application, right-click inside the application builder area and select <b>Add New Plugin</b></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-xl-12">
+                                        <div class="card card-default">
+                                            <div class="card-header">
+                                                <div class="header-block">
+                                                    <p class="title"> Submitting Your Application</p>
+                                                </div>
+                                            </div>
+                                            <div class="card-block">
+                                                <p>To submit your application, all plugins must be properly configured. This is indicated by a green color in the application builder area. To configure a plugin, simply click on it, then on the <i class="fa fa-wrench"></i> button and fill in the required information. Once all plugins are properly configured, right-click and select <b>Preview CADL</b>. After reviewing the generated <b>Cresco Application Description Language</b> (CADL) file, you may either submit directly from the pop-up, or copy the CADL and submit from the <a href="/applications">Applications</a> page.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" onclick="hideFAQ();">Close</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal fade" id="edit-plugin-modal">
@@ -402,6 +449,17 @@
                     alert("Upload Failed: " + err);
                 }
             });
+        }
+
+        function showFAQ() {
+            editting_plugin = true;
+            $('#faq-modal').modal('show');
+        }
+
+        function hideFAQ() {
+            editting_plugin = false;
+            $('#faq-modal').modal('hide');
+            resetModal();
         }
     </script>
 {% endblock %}
