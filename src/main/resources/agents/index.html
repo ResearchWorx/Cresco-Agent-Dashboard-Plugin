@@ -80,7 +80,7 @@
                 url: "/regions/list"
             }).complete(function(data) {
                 var json = data['responseJSON'];
-                var options = '<option value="blank" selected></option><option value="">All</option>';
+                var options = '<option value="" selected>All</option>';
                 $.each(json.regions, function(i, v) {
                     options += '<option value"' + v.name + '">' + v.name + '</option>';
                 });
@@ -90,6 +90,8 @@
             });
             regions.change(function() {
                 var region = regions.val();
+                if (region === null)
+                    region = "";
                 if (region === 'blank') {
                     agents_row.css('display', 'none');
                     return;
@@ -145,6 +147,7 @@
                     console.error(data);
                 });
             });
+            regions.change();
         });
         function resources(region, agent) {
             $.ajax({
