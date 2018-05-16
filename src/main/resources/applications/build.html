@@ -237,7 +237,10 @@
                 var cadl = generateCADL();
                 console.log("Submitting CADL");
                 console.log(cadl);
-                $.post("/applications/add", cadl, function(result) {
+                var data = {};
+                data.tenant_id = "0";
+                data.pipeline = cadl;
+                $.post("/applications/add", data, function(result) {
                     window.location.href = "/applications";
                 });
             } else {
