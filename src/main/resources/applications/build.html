@@ -15,8 +15,11 @@
                             <div class="header-block">
                                 <h2 class="cresco-list-title">Application Builder</h2>
                             </div>
+                            <div class="header-block pull-right">
+                                <button type="button" class="btn btn-success" onclick="showAddPlugin()"><i class="fa fa-upload" aria-hidden="true"></i> Upload Plugin</button>
+                            </div>
                         </div>
-                        <div id="workspace" class="card-block" style="position: absolute; top: 52px; left: 0px; bottom: 0px; width: 100%; padding: 0;"></div>
+                        <div id="workspace" class="card-block" style="position: absolute; top: 55px; left: 0px; bottom: 0px; width: 100%; padding: 0;"></div>
                     </div>
                 </div>
                 <div class="modal fade" id="edit-plugin-modal">
@@ -55,6 +58,45 @@
                         </div>
                     </div>
                 </div>
+                <div class="modal fade" id="upload-plugin-modal">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                    <span class="sr-only">Close</span>
+                                </button>
+                                <h4 class="modal-title" id="upload-plugin-modal-title">Upload New Plugin</h4>
+                            </div>
+                            <div class="modal-body" id="upload-plugin-modal-body">
+                                <form id="upload-plugin-modal-form" enctype="multipart/form-data" method="post" name="upload-plugin-modal-form">
+                                    <div class="form-group row">
+                                        <label for="upload-plugin-modal-pluginname" class="col-sm-2 form-control-label">Pluginname</label>
+                                        <div class="col-sm-10">
+                                            <input type="text" class="form-control" id="upload-plugin-modal-pluginname" name="pluginname" placeholder="Pluginname">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="upload-plugin-modal-jarfile" class="col-sm-2 form-control-label">Jarfile</label>
+                                        <div class="col-sm-10">
+                                            <input type="text" class="form-control" id="upload-plugin-modal-jarfile" name="jarfile"  placeholder="Jarfile">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="upload-plugin-modal-file" class="col-sm-2 form-control-label">File</label>
+                                        <div class="col-sm-10">
+                                            <input type="file" accept=".jar" class="form-control" id="upload-plugin-modal-file" name="file" >
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-success" onclick="uploadPlugin();">Upload Plugin</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 {% endblock %}
 
 {% block pagejs %}
@@ -66,10 +108,15 @@
         var pluginData = {};
 
         $(function() {
+            updateRepoData();
+            setInterval(updateRepoData(), 5000);
+        });
+
+        function updateRepoData() {
             $.getJSON('/plugins/listrepo', function(data) {
                 pluginData = data;
             });
-        });
+        }
 
         function generateTooltip(d) {
             var tooltip_html = "<div id='node-tooltip-title'>" + d.title + "</div>";
@@ -285,6 +332,35 @@
                 }
             });
             return cadl;
+        }
+
+        function showAddPlugin() {
+            editting_plugin = true;
+            $('#upload-plugin-modal').modal('show');
+        }
+
+        function uploadPlugin() {
+            editting_plugin = false;
+            $('#upload-plugin-modal').modal('hide');
+            var data = new FormData();
+            data.append('pluginname', $('#upload-plugin-modal-pluginname').val());
+            data.append('jarfile', $('#upload-plugin-modal-jarfile').val());
+            data.append('file', $('#upload-plugin-modal-file')[0].files[0]);
+            $.ajax({
+                url: '/plugins/uploadplugin',
+                method: "POST",
+                dataType: 'json',
+                data: data,
+                processData: false,
+                contentType: false,
+                success: function(result) {
+                    alert("Plugin uploaded!");
+                    updateRepoData();
+                },
+                error: function(err) {
+                    alert("Upload Failed: " + err);
+                }
+            });
         }
     </script>
 {% endblock %}
