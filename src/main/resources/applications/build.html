@@ -106,15 +106,35 @@
     <script type="text/javascript" src="/includes/js/force.js"></script>
     <script type="text/javascript">
         var pluginData = {};
+        var regionData = {};
+        var agentData = {};
 
         $(function() {
             updateRepoData();
+            updateRegionData();
+            updateAgentData();
             setInterval(updateRepoData(), 5000);
+            setInterval(updateRegionData(), 5000);
+            setInterval(updateAgentData(), 5000);
         });
 
         function updateRepoData() {
             $.getJSON('/plugins/listrepo', function(data) {
                 pluginData = data;
+            });
+        }
+
+        function updateRegionData() {
+            $.getJSON('/regions/list', function(data) {
+                regionData = data;
+                console.log(regionData);
+            });
+        }
+
+        function updateAgentData() {
+            $.getJSON('/agents/list', function(data) {
+                agentData = data;
+                console.log(agentData);
             });
         }
 
@@ -146,14 +166,31 @@
                 if (!node.params.hasOwnProperty(param)) continue;
                 var paramHTML = "<div class='form-group row'>";
                 if (param === "pluginname" || param === "jarfile" || param === "version" || param === "md5") {
-                    paramHTML += "<div class='col-sm-3'><input class='form-control' disabled name='edit-plugin-param-keys[]' placeholder='Parameter Key' value='" + param + "' /></div>";
-                    paramHTML += "<div class='col-sm-9'><input id='edit-plugin-" + param + "' class='form-control' disabled name='edit-plugin-param-values[]' placeholder='Parameter Value' value='" + node.params[param] + "'/></div>";
-                } else if (param === "location_agent" || param === "location_region") {
-                    paramHTML += "<div class='col-sm-3'><input class='form-control' disabled name='edit-plugin-param-keys[]' placeholder='Parameter Key' value='" + param + "' /></div>";
-                    paramHTML += "<div class='col-sm-9'><input id='edit-plugin-" + param + "' class='form-control' name='edit-plugin-param-values[]' placeholder='Parameter Value' value='" + node.params[param] + "'/></div>";
+                    paramHTML += "<div class='col-sm-3'><input class='form-control' disabled name='edit-plugin-param-input-keys[]' placeholder='Parameter Key' value='" + param + "' /></div>";
+                    paramHTML += "<div class='col-sm-9'><input id='edit-plugin-" + param + "' class='form-control' disabled name='edit-plugin-param-input-values[]' placeholder='Parameter Value' value='" + node.params[param] + "'/></div>";
+                } else if (param === "location_region") {
+                    paramHTML += "<div class='col-sm-3'><input class='form-control' disabled name='edit-plugin-param-select-keys[]' placeholder='Parameter Key' value='" + param + "' /></div>";
+                    paramHTML += "<div class='col-sm-9'><select id='edit-plugin-" + param + "' class='form-control' name='edit-plugin-param-select-values[]'>";
+                    $.each(regionData.regions, function(i, v) {
+                        console.log(v);
+                        paramHTML += "<option value='" + v.name + "'";
+                        if (node.params.location_region === v.name) { paramHTML += " selected "; }
+                        paramHTML += ">" + v.name + "</option>";
+                    });
+                    paramHTML += "</div>";
+                } else if (param === "location_agent") {
+                    paramHTML += "<div class='col-sm-3'><input class='form-control' disabled name='edit-plugin-param-select-keys[]' placeholder='Parameter Key' value='" + param + "' /></div>";
+                    paramHTML += "<div class='col-sm-9'><select id='edit-plugin-" + param + "' class='form-control' name='edit-plugin-param-select-values[]'>";
+                    $.each(agentData.agents, function(i, v) {
+                        console.log(v);
+                        paramHTML += "<option value='" + v.name + "'";
+                        if (node.params.location_agent === v.name) { paramHTML += " selected "; }
+                        paramHTML += ">" + v.name + "</option>";
+                    });
+                    paramHTML += "</div>";
                 } else {
-                    paramHTML += "<div class='col-sm-3'><input class='form-control' name='edit-plugin-param-keys[]' placeholder='Parameter Key' value='" + param + "' /></div>";
-                    paramHTML += "<div class='col-sm-8'><input class='form-control' name='edit-plugin-param-values[]' placeholder='Parameter Value' value='" + node.params[param] + "'/></div>";
+                    paramHTML += "<div class='col-sm-3'><input class='form-control' name='edit-plugin-param-input-keys[]' placeholder='Parameter Key' value='" + param + "' /></div>";
+                    paramHTML += "<div class='col-sm-8'><input class='form-control' name='edit-plugin-param-input-values[]' placeholder='Parameter Value' value='" + node.params[param] + "'/></div>";
                     paramHTML += "<button type='button' class='btn btn-danger' onclick='$(this).closest(\"div\").remove();'><i class='fa fa-trash'></i></button>";
                 }
                 paramHTML += "</div>";
@@ -214,17 +251,28 @@
         function updatePlugin() {
             var index = $('#edit-plugin-index').val();
             var node = nodes[index];
-            var paramKeys = []
-            $('input[name^="edit-plugin-param-keys"]').each(function() {
-                paramKeys.push($(this).val());
+            var inputParamKeys = []
+            $('input[name^="edit-plugin-param-input-keys"]').each(function() {
+                inputParamKeys.push($(this).val());
             });
-            var paramValues = []
-            $('input[name^="edit-plugin-param-values"]').each(function() {
-                paramValues.push($(this).val());
+            var inputParamValues = []
+            $('input[name^="edit-plugin-param-input-values"]').each(function() {
+                inputParamValues.push($(this).val());
+            });
+            var selectParamKeys = []
+            $('input[name^="edit-plugin-param-select-keys"]').each(function() {
+                selectParamKeys.push($(this).val());
+            });
+            var selectParamValues = []
+            $('select[name^="edit-plugin-param-select-values"]').each(function() {
+                selectParamValues.push($(this).val());
             });
             node.params = {};
-            for (var i = 0; i < paramKeys.length; i++) {
-                node.params[paramKeys[i]] = paramValues[i];
+            for (var i = 0; i < inputParamKeys.length; i++) {
+                node.params[inputParamKeys[i]] = inputParamValues[i];
+            }
+            for (var i = 0; i < selectParamKeys.length; i++) {
+                node.params[selectParamKeys[i]] = selectParamValues[i];
             }
             restart();
             resetModal();
