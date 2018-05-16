@@ -19,9 +19,9 @@ var contextMenu = [
             addnode(this);
         }
     },{
-        title: 'Generate CADL',
+        title: 'Preview CADL',
         action: function(data, index) {
-            generateCADL();
+            previewCADL();
         }
     }
 ];
@@ -373,7 +373,8 @@ function addnode(element) {
             'jarfile': '',
             'version': '',
             'md5': '',
-            'test': 'blah'
+            'location_agent': '',
+            'location_region': ''
         }
     };
     node.x = point[0];
@@ -386,6 +387,10 @@ function addnode(element) {
 function checknode(d) {
     var valid = true;
     if (d.params === 'undefined' || d.params.pluginname === 'undefined' || d.params.pluginname === '' || d.params.pluginname == null)
+        valid = false;
+    if (d.params === 'undefined' || d.params.location_agent === 'undefined' || d.params.location_agent === '')
+        valid = false;
+    if (d.params === 'undefined' || d.params.location_region === 'undefined' || d.params.location_region === '')
         valid = false;
     return valid;
 }
