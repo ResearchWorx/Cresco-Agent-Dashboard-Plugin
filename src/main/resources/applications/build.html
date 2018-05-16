@@ -239,7 +239,8 @@
                 console.log(cadl);
                 var data = {};
                 data.tenant_id = "0";
-                data.pipeline = cadl;
+                data.pipeline = JSON.stringify(cadl, undefined, 4);
+                console.log(data);
                 $.post("/applications/add", data, function(result) {
                     window.location.href = "/applications";
                 });
