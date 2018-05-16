@@ -110,9 +110,6 @@
         var agentData = {};
 
         $(function() {
-            updateRepoData();
-            updateRegionData();
-            updateAgentData();
             setInterval(updateRepoData(), 5000);
             setInterval(updateRegionData(), 5000);
             setInterval(updateAgentData(), 5000);
@@ -127,14 +124,12 @@
         function updateRegionData() {
             $.getJSON('/regions/list', function(data) {
                 regionData = data;
-                console.log(regionData);
             });
         }
 
         function updateAgentData() {
             $.getJSON('/agents/list', function(data) {
                 agentData = data;
-                console.log(agentData);
             });
         }
 
@@ -172,7 +167,6 @@
                     paramHTML += "<div class='col-sm-3'><input class='form-control' disabled name='edit-plugin-param-select-keys[]' placeholder='Parameter Key' value='" + param + "' /></div>";
                     paramHTML += "<div class='col-sm-9'><select id='edit-plugin-" + param + "' class='form-control' name='edit-plugin-param-select-values[]'>";
                     $.each(regionData.regions, function(i, v) {
-                        console.log(v);
                         paramHTML += "<option value='" + v.name + "'";
                         if (node.params.location_region === v.name) { paramHTML += " selected "; }
                         paramHTML += ">" + v.name + "</option>";
@@ -182,7 +176,6 @@
                     paramHTML += "<div class='col-sm-3'><input class='form-control' disabled name='edit-plugin-param-select-keys[]' placeholder='Parameter Key' value='" + param + "' /></div>";
                     paramHTML += "<div class='col-sm-9'><select id='edit-plugin-" + param + "' class='form-control' name='edit-plugin-param-select-values[]'>";
                     $.each(agentData.agents, function(i, v) {
-                        console.log(v);
                         paramHTML += "<option value='" + v.name + "'";
                         if (node.params.location_agent === v.name) { paramHTML += " selected "; }
                         paramHTML += ">" + v.name + "</option>";
