@@ -111,11 +111,11 @@
         }
     });
     function updateAppList() {
-        if (apps_datatable !== null)
-            apps_datatable.destroy();
         $.ajax({
             url: "/applications/list"
         }).complete(function(data) {
+            if (apps_datatable !== null)
+                apps_datatable.destroy();
             var json = data['responseJSON'];
             var body = '';
             $.each(json.pipelines, function(i, v) {
