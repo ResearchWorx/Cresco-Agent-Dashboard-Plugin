@@ -440,7 +440,6 @@
 
         function uploadPlugin() {
             editting_plugin = false;
-            $('#upload-plugin-modal').modal('hide');
             var data = new FormData();
             var file = $('#upload-plugin-modal-file')[0].files[0];
             data.append('pluginname', file.name);
@@ -456,6 +455,7 @@
                 processData: false,
                 contentType: false,
                 success: function(result) {
+                    $('#upload-plugin-modal').modal('hide');
                     $('#upload-plugin-modal-file').val('');
                     $('#upload-plugin-modal-form').css("display", "block");
                     $('#upload-plugin-modal-waiting').css("display", "none");
