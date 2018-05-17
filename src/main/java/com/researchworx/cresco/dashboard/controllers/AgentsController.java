@@ -103,6 +103,26 @@ public class AgentsController {
     }
 
     @GET
+    @Path("listlocal")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listLocal() {
+        logger.trace("Call to listLocal()");
+        try {
+            if (plugin == null)
+                return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+
+
+            String response = "{\"agents\": [{\"agent\": \""+ plugin.getAgent() +"\",\"region\": \"" + plugin.getRegion() +"\"}]}";
+
+            return Response.ok(response, MediaType.APPLICATION_JSON_TYPE).build();
+        } catch (Exception e) {
+            if (plugin != null)
+                logger.error("listLocal() : {}", e.getMessage());
+            return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+        }
+    }
+
+    @GET
     @Path("list/{region}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response listByRegion(@PathParam("region") String region) {
