@@ -179,6 +179,51 @@ public class AgentsController {
         }
     }
 
+
+    @GET
+    @Path("getfreeport/{region}/{agent}/{count}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getfreeport(@PathParam("region") String region,
+                                @PathParam("agent") String agent,
+                                @PathParam("count") String count){
+        logger.trace("Call to resources({}, {})", region, agent);
+        try {
+            if (plugin == null)
+                return Response.ok("{\"ports\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
+
+            MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+                    plugin.getPluginID(), "Region List Request");
+            request.setParam("src_region", plugin.getRegion());
+            request.setParam("src_agent", plugin.getAgent());
+            request.setParam("src_plugin", plugin.getPluginID());
+            request.setParam("dst_region", region);
+            request.setParam("dst_agent", agent);
+            request.setParam("dst_plugin", "plugin/0");
+            //request.setParam("is_regional", Boolean.TRUE.toString());
+            //request.setParam("is_global", Boolean.TRUE.toString());
+            //request.setParam("globalcmd", Boolean.TRUE.toString());
+            request.setParam("action", "getfreeports");
+            request.setParam("action_portcount", count);
+            MsgEvent response = plugin.sendRPC(request);
+
+            if (response == null)
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
+                        MediaType.APPLICATION_JSON_TYPE).build();
+            String freeports = "[]";
+            if (response.getParam("freeports") != null)
+                freeports = response.getCompressedParam("freeports");
+            return Response.ok(freeports, MediaType.APPLICATION_JSON_TYPE).build();
+
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            if (plugin != null)
+                logger.error("resources({}, {}) : {}", region, agent, sw.toString());
+            return Response.ok("{\"ports\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
+        }
+    }
+    /*
     @GET
     @Path("getfreeport/{region}/{agent}/{count}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -220,7 +265,7 @@ public class AgentsController {
             return Response.ok("{\"ports\":[]}", MediaType.APPLICATION_JSON_TYPE).build();
         }
     }
-
+*/
     public int getPort() {
 
         int freePort = -1;
