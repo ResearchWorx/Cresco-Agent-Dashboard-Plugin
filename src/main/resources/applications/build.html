@@ -117,7 +117,7 @@
                             </div>
                             <div class="modal-body" id="upload-plugin-modal-body">
                                 <form id="upload-plugin-modal-form" enctype="multipart/form-data" method="post" name="upload-plugin-modal-form">
-                                    <div class="form-group row">
+                                    <!--<div class="form-group row">
                                         <label for="upload-plugin-modal-pluginname" class="col-sm-2 form-control-label">Pluginname</label>
                                         <div class="col-sm-10">
                                             <input type="text" class="form-control" id="upload-plugin-modal-pluginname" name="pluginname" placeholder="Pluginname">
@@ -128,7 +128,7 @@
                                         <div class="col-sm-10">
                                             <input type="text" class="form-control" id="upload-plugin-modal-jarfile" name="jarfile"  placeholder="Jarfile">
                                         </div>
-                                    </div>
+                                    </div>-->
                                     <div class="form-group row">
                                         <label for="upload-plugin-modal-file" class="col-sm-2 form-control-label">File</label>
                                         <div class="col-sm-10">
@@ -136,10 +136,21 @@
                                         </div>
                                     </div>
                                 </form>
+                                <div class="row" id="upload-plugin-modal-waiting" style="width: 100%;display: none;">
+                                    <div class="col-sm-12">
+                                        <center><span style="font-size: 24px;">Please stand by while your plugin uploads...</span></center>
+                                    </div>
+                                    <div class="col-sm-12">
+                                        &nbsp;
+                                    </div>
+                                    <div class="col-sm-12">
+                                        <center><i class="fa fa-spinner fa-spin" style="font-size:48px"></i></center>
+                                    </div>
+                                </div>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                <button type="button" class="btn btn-success" onclick="uploadPlugin();">Upload Plugin</button>
+                                <button id="upload-plugin-modal-submit-btn" type="button" class="btn btn-success" onclick="uploadPlugin();">Upload Plugin</button>
                             </div>
                         </div>
                     </div>
@@ -431,9 +442,12 @@
             editting_plugin = false;
             $('#upload-plugin-modal').modal('hide');
             var data = new FormData();
-            data.append('pluginname', $('#upload-plugin-modal-pluginname').val());
-            data.append('jarfile', $('#upload-plugin-modal-jarfile').val());
+            var file = $('#upload-plugin-modal-file')[0].files[0];
+            data.append('pluginname', file.name);
+            data.append('jarfile', file.name);
             data.append('file', $('#upload-plugin-modal-file')[0].files[0]);
+            $('#upload-plugin-modal-form').css("display", "none");
+            $('#upload-plugin-modal-waiting').css("display", "block");
             $.ajax({
                 url: '/plugins/uploadplugin',
                 method: "POST",
@@ -442,6 +456,9 @@
                 processData: false,
                 contentType: false,
                 success: function(result) {
+                    $('#upload-plugin-modal-file').val('');
+                    $('#upload-plugin-modal-form').css("display", "block");
+                    $('#upload-plugin-modal-waiting').css("display", "none");
                     alert("Plugin uploaded!");
                     updateRepoData();
                 },

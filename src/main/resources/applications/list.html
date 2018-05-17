@@ -97,12 +97,26 @@
     var apps_info_modal_title = $('#apps-info-modal-title');
     var apps_info_modal_body = $('#apps-info-modal-body');
     var new_app_modal = $('#new-app-info-modal');
+    var apps_datatable = null;
     $(function() {
+        updateAppList();
+        var timer = 0;
+        var PERIOD_VISIBLE = 5000;
+        var PERIOD_NOT_VISIBLE = 60000;
+        timer = setInterval(updateAppList, (document.hidden) ? PERIOD_NOT_VISIBLE : PERIOD_VISIBLE);
+        if(document.addEventListener) document.addEventListener("visibilitychange", visibilityChanged);
+        function visibilityChanged() {
+            clearTimeout(timer);
+            timer = setInterval(updateAppList, (document.hidden) ? PERIOD_NOT_VISIBLE : PERIOD_VISIBLE);
+        }
+    });
+    function updateAppList() {
+        if (apps_datatable !== null)
+            apps_datatable.destroy();
         $.ajax({
             url: "/applications/list"
         }).complete(function(data) {
             var json = data['responseJSON'];
-            console.log(data);
             var body = '';
             $.each(json.pipelines, function(i, v) {
                 body += '<tr>';
@@ -114,7 +128,7 @@
                 body += '</tr>';
             });
             apps_body.html(body);
-            apps.DataTable({
+            apps_datatable = apps.DataTable({
                 "columns": [
                     {}, // Name
                     {}, // Tenant
@@ -125,7 +139,7 @@
         }).error(function(data) {
             console.error(data);
         });
-    });
+    }
     function info(id) {
         $.ajax({
             url: "/applications/info/" + id
