@@ -1,5 +1,8 @@
 package com.researchworx.cresco.dashboard.controllers;
 
+import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Mustache;
+import com.github.mustachejava.MustacheFactory;
 import com.mitchellbosecke.pebble.PebbleEngine;
 import com.mitchellbosecke.pebble.error.PebbleException;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
@@ -39,6 +42,9 @@ public class ApplicationsController {
             PebbleEngine engine = new PebbleEngine.Builder().build();
             PebbleTemplate compiledTemplate = engine.getTemplate("applications/list.html");
 
+            MustacheFactory mf = new DefaultMustacheFactory();
+            Mustache mustache = mf.compile("applications.mustache");
+
             Map<String, Object> context = new HashMap<>();
             if (loginSession != null)
                 context.put("user", loginSession.getUsername());
@@ -46,14 +52,15 @@ public class ApplicationsController {
             context.put("page", "index");
 
             Writer writer = new StringWriter();
-            compiledTemplate.evaluate(writer, context);
+            //compiledTemplate.evaluate(writer, context);
+            mustache.execute(writer, context);
 
             return Response.ok(writer.toString()).build();
         } catch (PebbleException e) {
             return Response.ok("PebbleException: " + e.getMessage()).build();
-        } catch (IOException e) {
+        } /*catch (IOException e) {
             return Response.ok("IOException: " + e.getMessage()).build();
-        } catch (Exception e) {
+        }*/ catch (Exception e) {
             return Response.ok("Server error: " + e.getMessage()).build();
         }
     }
@@ -97,6 +104,9 @@ public class ApplicationsController {
             PebbleEngine engine = new PebbleEngine.Builder().build();
             PebbleTemplate compiledTemplate = engine.getTemplate("applications/build.html");
 
+            MustacheFactory mf = new DefaultMustacheFactory();
+            Mustache mustache = mf.compile("application-builder.mustache");
+
             Map<String, Object> context = new HashMap<>();
             if (loginSession != null)
                 context.put("user", loginSession.getUsername());
@@ -104,14 +114,15 @@ public class ApplicationsController {
             context.put("page", "build");
 
             Writer writer = new StringWriter();
-            compiledTemplate.evaluate(writer, context);
+            //compiledTemplate.evaluate(writer, context);
+            mustache.execute(writer, context);
 
             return Response.ok(writer.toString()).build();
         } catch (PebbleException e) {
             return Response.ok("PebbleException: " + e.getMessage()).build();
-        } catch (IOException e) {
+        } /*catch (IOException e) {
             return Response.ok("IOException: " + e.getMessage()).build();
-        } catch (Exception e) {
+        }*/ catch (Exception e) {
             return Response.ok("Server error: " + e.getMessage()).build();
         }
     }

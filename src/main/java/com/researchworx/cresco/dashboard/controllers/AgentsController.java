@@ -1,5 +1,8 @@
 package com.researchworx.cresco.dashboard.controllers;
 
+import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Mustache;
+import com.github.mustachejava.MustacheFactory;
 import com.google.gson.Gson;
 import com.mitchellbosecke.pebble.PebbleEngine;
 import com.mitchellbosecke.pebble.error.PebbleException;
@@ -19,11 +22,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -48,6 +48,9 @@ public class AgentsController {
             PebbleEngine engine = new PebbleEngine.Builder().build();
             PebbleTemplate compiledTemplate = engine.getTemplate("agents/index.html");
 
+            MustacheFactory mf = new DefaultMustacheFactory();
+            Mustache mustache = mf.compile("agents.mustache");
+
             Map<String, Object> context = new HashMap<>();
             if (loginSession != null)
                 context.put("user", loginSession.getUsername());
@@ -55,14 +58,15 @@ public class AgentsController {
             context.put("page", "index");
 
             Writer writer = new StringWriter();
-            compiledTemplate.evaluate(writer, context);
+            //compiledTemplate.evaluate(writer, context);
+            mustache.execute(writer, context);
 
             return Response.ok(writer.toString()).build();
         } catch (PebbleException e) {
             return Response.ok("PebbleException: " + e.getMessage()).build();
-        } catch (IOException e) {
+        } /*catch (IOException e) {
             return Response.ok("IOException: " + e.getMessage()).build();
-        } catch (Exception e) {
+        }*/ catch (Exception e) {
             return Response.ok("Server error: " + e.getMessage()).build();
         }
     }

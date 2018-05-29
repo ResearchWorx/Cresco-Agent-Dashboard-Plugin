@@ -75,8 +75,11 @@ public class Plugin extends CPlugin {
         ApplicationsController.connectPlugin(this);
 
         HttpServer server =  GrizzlyHttpServerFactory.createHttpServer(URI.create(baseURI), rc);
-        HttpHandler handler = new CLStaticHttpHandler(Plugin.class.getClassLoader(), "includes/");
-        server.getServerConfiguration().addHttpHandler(handler, "/includes");
+        server.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(Plugin.class.getClassLoader(), "includes/"), "/includes");
+        server.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(Plugin.class.getClassLoader(), "css/"), "/css");
+        server.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(Plugin.class.getClassLoader(), "img/"), "/img");
+        server.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(Plugin.class.getClassLoader(), "js/"), "/js");
+        server.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(Plugin.class.getClassLoader(), "vendors/"), "/vendors");
         //allow downloads in repo dir
         if(repoPath != null) {
             StaticHttpHandler staticHttpHandler = new StaticHttpHandler(repoPath);
@@ -112,6 +115,7 @@ public class Plugin extends CPlugin {
                 .register(RegionsController.class)
                 .register(GlobalController.class)
                 .register(ApplicationsController.class)
+                .register(MultiPartFeature.class)
                 ;
 
         HttpServer server =  GrizzlyHttpServerFactory.createHttpServer(URI.create(BASE_URI), rc);

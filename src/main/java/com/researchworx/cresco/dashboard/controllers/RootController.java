@@ -1,5 +1,8 @@
 package com.researchworx.cresco.dashboard.controllers;
 
+import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Mustache;
+import com.github.mustachejava.MustacheFactory;
 import com.mitchellbosecke.pebble.PebbleEngine;
 import com.mitchellbosecke.pebble.error.PebbleException;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
@@ -72,6 +75,9 @@ public class RootController {
             PebbleEngine engine = new PebbleEngine.Builder().build();
             PebbleTemplate compiledTemplate = engine.getTemplate("login.html");
 
+            MustacheFactory mf = new DefaultMustacheFactory();
+            Mustache mustache = mf.compile("login.mustache");
+
             Map<String, Object> context = new HashMap<>();
             if (redirect != null)
                 context.put("redirect", redirect);
@@ -84,14 +90,16 @@ public class RootController {
             NewCookie deleteError = new NewCookie(LOGIN_ERROR_COOKIE_NAME, null, null, null, null, 0, false);
 
             Writer writer = new StringWriter();
-            compiledTemplate.evaluate(writer, context);
+            //compiledTemplate.evaluate(writer, context);
+            mustache.execute(writer, context);
 
             return Response.ok(writer.toString()).cookie(deleteRedirect, deleteError).build();
         } catch (PebbleException e) {
             return Response.ok("PebbleException: " + e.getMessage()).build();
-        } catch (IOException e) {
+        } /*catch (IOException e) {
             return Response.ok("IOException: " + e.getMessage()).build();
-        } catch (Exception e) {
+        }*/ catch (Exception e) {
+            logger.error("{}", e.getMessage());
             return Response.serverError().build();
         }
     }

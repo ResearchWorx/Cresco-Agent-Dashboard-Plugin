@@ -1,5 +1,8 @@
 package com.researchworx.cresco.dashboard.controllers;
 
+import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Mustache;
+import com.github.mustachejava.MustacheFactory;
 import com.mitchellbosecke.pebble.PebbleEngine;
 import com.mitchellbosecke.pebble.error.PebbleException;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
@@ -13,7 +16,6 @@ import com.researchworx.cresco.library.utilities.CLogger;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -39,6 +41,9 @@ public class RegionsController {
             PebbleEngine engine = new PebbleEngine.Builder().build();
             PebbleTemplate compiledTemplate = engine.getTemplate("regions/index.html");
 
+            MustacheFactory mf = new DefaultMustacheFactory();
+            Mustache mustache = mf.compile("regions.mustache");
+
             Map<String, Object> context = new HashMap<>();
             if (loginSession != null)
                 context.put("user", loginSession.getUsername());
@@ -46,14 +51,15 @@ public class RegionsController {
             context.put("page", "index");
 
             Writer writer = new StringWriter();
-            compiledTemplate.evaluate(writer, context);
+            //compiledTemplate.evaluate(writer, context);
+            mustache.execute(writer, context);
 
             return Response.ok(writer.toString()).build();
         } catch (PebbleException e) {
             return Response.ok("PebbleException: " + e.getMessage()).build();
-        } catch (IOException e) {
+        } /*catch (IOException e) {
             return Response.ok("IOException: " + e.getMessage()).build();
-        } catch (Exception e) {
+        }*/ catch (Exception e) {
             return Response.ok("Server error: " + e.getMessage()).build();
         }
     }
