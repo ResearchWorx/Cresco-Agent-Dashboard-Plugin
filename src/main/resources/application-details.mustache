@@ -264,6 +264,17 @@
                 console.error(data);
             }
         });
+        $('#pipeline-status-modal').on('show.bs.modal', function() {
+            if (active_menu != null)
+                active_menu.hide();
+            active_menu = null;
+            active_menu_node = null;
+            selected_node = null;
+            selected_link = null;
+            nodes.splice(0, nodes.length);
+            links.splice(0, links.length);
+            restart();
+        });
         $('#pipeline-status-modal').on('shown.bs.modal', function() {
             showStatus();
             window.dispatchEvent(new Event('resize'));
@@ -288,14 +299,13 @@
         $.ajax({
             url: "/applications/info/" + pipeline_id,
             success: function(json) {
-                nodes.splice(0, nodes.length);
-                links.splice(0, links.length);
                 $.each(json.nodes, (i, v) => {
                     addExistingNode(v);
                 });
                 $.each(json.edges, (i, v) => {
                     addExistingEdge(v);
                 });
+
             },
             error: function(data) {
                 console.error(data);

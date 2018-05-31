@@ -555,10 +555,12 @@ function keyup() {
 }
 
 function generateTooltip(d) {
-    var tooltip_html = "<div id='node-tooltip-title'>" + d.title + "</div>";
+    var tooltip_html = "<div id='node-tooltip-title'><h5>" + d.title + "</h5></div>";
+    tooltip_html += "<div id='node-tooltip-body'>";
     for (var param in d.params) {
-        tooltip_html += "<b>" + param + "</b>: " + d.params[param] + "<br>";
+        tooltip_html += "<span class='key'>" + param + ":</span> <span class='string'>" + d.params[param] + "</span><br>";
     }
+    tooltip_html += "</div>";
     return tooltip_html;
 }
 

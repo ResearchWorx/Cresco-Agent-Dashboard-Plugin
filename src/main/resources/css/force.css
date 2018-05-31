@@ -60,14 +60,19 @@ text.id {
 }
 
 #node-tooltip {
-    width: 400px;
-    height: 300px;
-    overflow-y: scroll;
-    background-color: #777;
+    max-width: 500px;
+    /*background-color: #777;
     border-radius: 8px;
     padding: 8px;
     border: 1px black solid;
-    color: white;
+    color: white;*/
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    pointer-events: auto;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 0.3rem;
+    outline: 0;
     position: absolute;
     z-index: 1200;
     visibility: hidden;
@@ -76,9 +81,11 @@ text.id {
 #node-tooltip-title {
     width: 100%;
     text-align: center;
-    border: 1px solid black;
-    border-radius: 5px;
-    padding-top: 3px;
-    padding-bottom: 3px;
-    margin-bottom: 5px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    padding-top: 5px;
+}
+
+#node-tooltip-body {
+    width: 100%;
+    padding: 8px;
 }
