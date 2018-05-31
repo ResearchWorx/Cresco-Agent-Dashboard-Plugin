@@ -198,6 +198,10 @@ d3.radialMenu = function() {
             .append("g")
             .attr("class", "menu-segment-container");
 
+        menuSegments.append("title")
+            .attr("class", "menu-segment-title")
+            .text(function(d) { return d.data.text; });
+
         // Add the segments
         menuSegments.append("path")
             .attr("class", "menu-segment")

@@ -92,7 +92,7 @@
 <script type="text/javascript" src="/js/d3.v3.min.js"></script>
 <script type="text/javascript" src="/js/context-menu.js"></script>
 <script type="text/javascript" src="/js/menu.js"></script>
-<script type="text/javascript" src="/js/force.js"></script>
+<script type="text/javascript" src="/js/app-details.js"></script>
 <script type="text/javascript">
     var app_name = $('#application-name');
     var app_status = $('#application-status');
@@ -116,7 +116,7 @@
                     body += '<td>' + v.node_id + '</td>';
                     body += '<td>' + v.node_name + '</td>';
                     body += '<td>' + v.type + '</td>';
-                    body += '<td>' + v.params.status_desc.replace('iNode', 'Node') + '</td>';
+                    body += '<td>' + v.params.status_desc + '</td>';
                     body += '</tr>';
                 });
                 node_table_body.html(body);
@@ -286,7 +286,7 @@
 
     function showStatus() {
         $.ajax({
-            url: "/applications/export/" + pipeline_id,
+            url: "/applications/info/" + pipeline_id,
             success: function(json) {
                 nodes.splice(0, nodes.length);
                 links.splice(0, links.length);
@@ -303,178 +303,6 @@
         });
     }
 
-    function addExistingNode(data) {
-        let node = {
-            id: data.node_id,
-            title: data.node_name,
-            reflexive: true,
-            params: data.params
-        };
-        node.x = 0;
-        node.y = 0;
-        nodes.push(node);
-        restart();
-    }
-
-    function addExistingEdge(data) {
-        let source = null;
-        let target = null;
-        for (id in nodes) {
-            const node = nodes[id];
-            if (node.id === data.node_from)
-                source = node;
-            if (node.id === data.node_to)
-                target = node;
-        }
-        if (source === null || target === null)
-            return;
-        let link = {
-            source: source,
-            target: target,
-            left: false,
-            right: true
-        }
-        links.push(link);
-        restart();
-    }
-
-    function generateTooltip(d) {
-        var tooltip_html = "<div id='node-tooltip-title'>" + d.title + "</div>";
-        for (var param in d.params) {
-            tooltip_html += "<b>" + param + "</b>: " + d.params[param] + "<br>";
-        }
-        return tooltip_html;
-    }
-
-    function editplugin(d) {
-        editting_plugin = true;
-        var node = nodes[d.data.node.index];
-        $('#edit-plugin-modal-title').html("Editting " + node.title);
-        var modalBody = $('#edit-plugin-modal-body');
-        modalBody.append("<input type='hidden' id='edit-plugin-index' value='" + node.index + "' /><br>");
-        var pluginList = "<select class='form-control' id='edit-plugin-selected-plugin'><option value='-1'>-- Select Plugin --</option>";
-        $.each(pluginData.plugins, function(i, v) {
-            pluginList += "<option value='" + i + "'";
-            if (v.pluginname == node.params.pluginname) {
-                pluginList += " selected ";
-            }
-            pluginList += ">" + v.pluginname + "</option>";
-        });
-        pluginList += "</select><br>";
-        modalBody.append(pluginList);
-        for (var param in node.params) {
-            if (!node.params.hasOwnProperty(param)) continue;
-            var paramHTML = "<div class='form-group row'>";
-            if (param === "pluginname" || param === "jarfile" || param === "version" || param === "md5") {
-                paramHTML += "<div class='col-sm-3'><input class='form-control' disabled name='edit-plugin-param-input-keys[]' placeholder='Parameter Key' value='" + param + "' /></div>";
-                paramHTML += "<div class='col-sm-9'><input id='edit-plugin-" + param + "' class='form-control' disabled name='edit-plugin-param-input-values[]' placeholder='Parameter Value' value='" + node.params[param] + "'/></div>";
-            } else if (param === "location_region") {
-                paramHTML += "<div class='col-sm-3'><input class='form-control' disabled name='edit-plugin-param-select-keys[]' placeholder='Parameter Key' value='" + param + "' /></div>";
-                paramHTML += "<div class='col-sm-9'><select id='edit-plugin-" + param + "' class='form-control' name='edit-plugin-param-select-values[]'>";
-                $.each(regionData.regions, function(i, v) {
-                    paramHTML += "<option value='" + v.name + "'";
-                    if (node.params.location_region === v.name) { paramHTML += " selected "; }
-                    paramHTML += ">" + v.name + "</option>";
-                });
-                paramHTML += "</div>";
-            } else if (param === "location_agent") {
-                paramHTML += "<div class='col-sm-3'><input class='form-control' disabled name='edit-plugin-param-select-keys[]' placeholder='Parameter Key' value='" + param + "' /></div>";
-                paramHTML += "<div class='col-sm-9'><select id='edit-plugin-" + param + "' class='form-control' name='edit-plugin-param-select-values[]'>";
-                $.each(agentData.agents, function(i, v) {
-                    paramHTML += "<option value='" + v.name + "'";
-                    if (node.params.location_agent === v.name) { paramHTML += " selected "; }
-                    paramHTML += ">" + v.name + "</option>";
-                });
-                paramHTML += "</div>";
-            } else {
-                paramHTML += "<div class='col-sm-3'><input class='form-control' name='edit-plugin-param-input-keys[]' placeholder='Parameter Key' value='" + param + "' /></div>";
-                paramHTML += "<div class='col-sm-8'><input class='form-control' name='edit-plugin-param-input-values[]' placeholder='Parameter Value' value='" + node.params[param] + "'/></div>";
-                paramHTML += "<button type='button' class='btn btn-danger' onclick='$(this).closest(\"div\").remove();'><i class='fa fa-trash'></i></button>";
-            }
-            paramHTML += "</div>";
-            modalBody.append(paramHTML);
-        }
-        modalBody.append("<button id='addParamBtn' type='button' class='btn btn-primary' onclick='addParamField();'><i class='fa fa-plus-square'></i> Add Parameter</button>");
-        $('#edit-plugin-selected-plugin').change(function() {
-            var pluginname = $('#edit-plugin-pluginname');
-            pluginname.val('');
-            var jarfile = $('#edit-plugin-jarfile');
-            jarfile.val('');
-            var version = $('#edit-plugin-version');
-            version.val('');
-            var md5hash = $('#edit-plugin-md5');
-            md5hash.val('');
-            var pluginID = $('#edit-plugin-selected-plugin').val();
-            if (pluginID > -1) {
-                var pluginInfo = pluginData.plugins[pluginID];
-                pluginname.val(pluginInfo.pluginname);
-                jarfile.val(pluginInfo.jarfile);
-                version.val(pluginInfo.version);
-                md5hash.val(pluginInfo.md5);
-            }
-        });
-        $('#edit-plugin-modal').modal('show');
-        $('#edit-plugin-modal').on('hidden.bs.modal', function() {
-            resetModal();
-        });
-    }
-
-    function addParamField() {
-        var paramHTML = "<div class='form-group row'>";
-        paramHTML += "<div class='col-sm-2'><input class='form-control' name='edit-plugin-param-keys[]' placeholder='Parameter Key' /></div>";
-        paramHTML += "<div class='col-sm-9'><input class='form-control' name='edit-plugin-param-values[]' placeholder='Parameter Value' /></div>";
-        paramHTML += "<button type='button' class='btn btn-danger' onclick='$(this).closest(\"div\").remove();'><i class='fa fa-trash'></i></button>";
-        paramHTML += "</div>";
-        $(paramHTML).insertBefore( $("#addParamBtn") );
-    }
-
-    function deleteplugin(d) {
-        if(selected_node) {
-            nodes.splice(nodes.indexOf(selected_node), 1);
-            spliceLinksForNode(selected_node);
-        } else if(selected_link) {
-            links.splice(links.indexOf(selected_link), 1);
-        }
-        selected_link = null;
-        selected_node = null;
-        tooltip.style('visibility', 'hidden');
-        clearTimeout(tooltip_show);
-        restart();
-    }
-
-    function cancelUpdatePlugin() {
-        resetModal();
-    }
-
-    function updatePlugin() {
-        var index = $('#edit-plugin-index').val();
-        var node = nodes[index];
-        var inputParamKeys = []
-        $('input[name^="edit-plugin-param-input-keys"]').each(function() {
-            inputParamKeys.push($(this).val());
-        });
-        var inputParamValues = []
-        $('input[name^="edit-plugin-param-input-values"]').each(function() {
-            inputParamValues.push($(this).val());
-        });
-        var selectParamKeys = []
-        $('input[name^="edit-plugin-param-select-keys"]').each(function() {
-            selectParamKeys.push($(this).val());
-        });
-        var selectParamValues = []
-        $('select[name^="edit-plugin-param-select-values"]').each(function() {
-            selectParamValues.push($(this).val());
-        });
-        node.params = {};
-        for (var i = 0; i < inputParamKeys.length; i++) {
-            node.params[inputParamKeys[i]] = inputParamValues[i];
-        }
-        for (var i = 0; i < selectParamKeys.length; i++) {
-            node.params[selectParamKeys[i]] = selectParamValues[i];
-        }
-        restart();
-        resetModal();
-    }
     function syntaxHighlight(json) {
         json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {

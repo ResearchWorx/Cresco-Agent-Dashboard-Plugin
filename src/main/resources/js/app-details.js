@@ -3,6 +3,8 @@ var width  = $('#workspace').width(),
     height = $('#workspace').height(),
     invalid_color = '#b66',
     valid_color = '#6b6',
+    init_color = '#cc3',
+    disabled_color = '#bbb',
     node_size = 40,
     editting_plugin = false;
 
@@ -30,22 +32,18 @@ var bg = svg.append('svg:rect')
     .attr('class', 'zoom')
     .attr('x', 0)
     .attr('y', 0)
-    .attr('width', width)
-    .attr('height', height)
+    .attr('width', 1000)
+    .attr('height', 1000)
     .style('opacity', 0.0)
     .on('contextmenu', d3.contextMenu(contextMenu, {
         theme: function () {
             return 'd3-context-menu-theme';
         },
-        onOpen: function (data, index) {
-            //console.log('Menu Opened!', 'element:', this, 'data:', data, 'index:', index);
-        },
-        onClose: function (data, index) {
-            //console.log('Menu Closed!', 'element:', this, 'data:', data, 'index:', index);
-        },
+        onOpen: function (data, index) { },
+        onClose: function (data, index) { },
         position: function (data, index) {
-            var elm = this;
-            var bounds = elm.getBoundingClientRect();
+            let elm = this;
+            let bounds = elm.getBoundingClientRect();
             if (data === 'green') {
                 // first circle will have the menu aligned top-right
                 return {
@@ -211,7 +209,7 @@ function restart() {
 
     // update existing nodes (reflexive & selected visual states)
     circle.selectAll('circle')
-        .style('fill', function(d) { return (checknode(d)) ? valid_color : invalid_color })
+        .style('fill', function(d) { return (checknode(d)); })
         .classed('reflexive', function(d) { return d.reflexive; });
 
     // add new nodes
@@ -284,9 +282,9 @@ function restart() {
             if (mouseup_node === mousedown_node) {
                 if (active_menu == null && selected_node === mouseup_node) {
                     var data = [
-                        {icon: "/img/icons/wrench.svg", faicon: "wrench", text: "Edit Plugin", node: d, action: function(d) { editplugin(d); }},
-                        //{icon: "/includes/assets/share-alt.svg", faicon: "share-alt", text: "link", node: d, action: function(d) { linkplugin(d); }},
-                        {icon: "/img/icons/trash-alt.svg", faicon: "trash-alt", text: "Delete Plugin", node: d, action: function(d) { deleteplugin(d); }}
+                        {icon: "/img/icons/sitemap.svg", favicon: "wrench", text: "Region Status", node: d, action: function(d) { window.location.href = `/regions/details/${d.data.node.params.region}`; }},
+                        {icon: "/img/icons/microchip.svg", favicon: "wrench", text: "Agent Status", node: d, action: function(d) { window.location.href = `/agents/details/${d.data.node.params.region}/${d.data.node.params.agent}`; }},
+                        {icon: "/img/icons/plug.svg", favicon: "trash-alt", text: "Plugin Status", node: d, action: function(d) { window.location.href = `/plugins/details/${d.data.node.params.region}/${d.data.node.params.agent}/${d.data.node.params.plugin}`; }}
                     ];
 
                     active_menu = new d3.radialMenu().radius(node_size + 1)
@@ -333,7 +331,7 @@ function restart() {
             selected_node = null;
             restart();
         })
-        .on('contextmenu', function(d) { d3.event.preventDefault(); console.log(d); });
+        .on('contextmenu', function(d) { d3.event.preventDefault(); });
 
     // show node IDs
     g.append('svg:text')
@@ -341,9 +339,6 @@ function restart() {
         .attr('y', 4)
         .attr('class', 'id')
         .text(function(d) { return d.title; });
-
-    /*g.append('svg:title')
-        .text(function(d) { return d.title; });*/
 
     // remove old nodes
     circle.exit().remove();
@@ -353,18 +348,8 @@ function restart() {
 }
 
 function addnode(element) {
-    /*var nextID = 0;
-    for (var i = 0; i < nodes.length; i++) {
-        console.log(nodes);
-        console.log(nodes[i]);
-        if (typeof nodes[i] === 'undefined') {
-            nextID = i;
-            break;
-        }
-    }*/
-    // insert new node at point
-    var point = d3.mouse(element);
-    var node = {
+    let point = d3.mouse(element);
+    let node = {
         id: ++lastNodeId,
         title: 'Plugin ' + lastNodeId,
         reflexive: true,
@@ -384,44 +369,72 @@ function addnode(element) {
     restart();
 }
 
-function checknode(d) {
-    var valid = true;
-    if (d.params === 'undefined' || d.params.pluginname === 'undefined' || d.params.pluginname === '' || d.params.pluginname == null)
-        valid = false;
-    if (d.params === 'undefined' || d.params.location_agent === 'undefined' || d.params.location_agent === '')
-        valid = false;
-    if (d.params === 'undefined' || d.params.location_region === 'undefined' || d.params.location_region === '')
-        valid = false;
-    return valid;
-}
-
-function mousedown() {
-    // prevent I-bar on drag
-    //d3.event.preventDefault();
-
-    /*if (active_menu != null)
-        active_menu.hide();
-    active_menu = null;
-    active_menu_node = null;*/
-
-    // because :active only works in WebKit?
-    /*svg.classed('active', true);
-
-    if(d3.event.ctrlKey || mousedown_node || mousedown_link) return;
-
-    // insert new node at point
-    var point = d3.mouse(this),
-        node = {id: ++lastNodeId, title: 'Plugin ' + (lastNodeId + 1), reflexive: true};
-    node.x = point[0];
-    node.y = point[1];
+function addExistingNode(data) {
+    let node = {
+        id: data.node_id,
+        title: data.node_name,
+        reflexive: true,
+        params: data.params
+    };
+    node.x = 0;
+    node.y = 0;
     nodes.push(node);
-
-    restart();*/
+    restart();
+    if (node.params.inode_id !== 'undefined' && node.params.resource_id !== 'undefined') {
+        $.ajax({
+            url: "/applications/nodeinfo/" + node.params.inode_id + "/" + node.params.resource_id,
+            success: function (nodeData) {
+                //console.log(nodeData);
+                node.params.region = nodeData.isassignmentinfo.region;
+                node.params.agent = nodeData.isassignmentinfo.agent;
+                node.params.plugin = nodeData.isassignmentinfo.plugin;
+                restart();
+            },
+            error: function (error) {
+                console.log(error);
+            }
+        });
+    }
 }
 
-/*function contextmenu() {
-    alert("rightclick");
-}*/
+function addExistingEdge(data) {
+    let source = null;
+    let target = null;
+    for (id in nodes) {
+        const node = nodes[id];
+        if (node.id === data.node_from)
+            source = node;
+        if (node.id === data.node_to)
+            target = node;
+    }
+    if (source === null || target === null)
+        return;
+    let link = {
+        source: source,
+        target: target,
+        left: false,
+        right: true
+    };
+    links.push(link);
+    restart();
+}
+
+function checknode(d) {
+    let color = invalid_color;
+    if (d.params === 'undefined')
+        color = invalid_color;
+    else if (d.params.status_code === 'undefined')
+        color = invalid_color;
+    else if (d.params.status_code === "3")
+        color = init_color;
+    else if (d.params.status_code === "8")
+        color = disabled_color;
+    else if (d.params.status_code === "10")
+        color = valid_color;
+    return color;
+}
+
+function mousedown() { }
 
 function mousemove() {
     if(!mousedown_node) return;
@@ -539,6 +552,14 @@ function keyup() {
             .on('touchstart.drag', null);
         svg.classed('ctrl', false);
     }
+}
+
+function generateTooltip(d) {
+    var tooltip_html = "<div id='node-tooltip-title'>" + d.title + "</div>";
+    for (var param in d.params) {
+        tooltip_html += "<b>" + param + "</b>: " + d.params[param] + "<br>";
+    }
+    return tooltip_html;
 }
 
 // app starts here

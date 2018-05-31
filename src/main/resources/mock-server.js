@@ -48,6 +48,15 @@ app.get('/agents', (req, res) => {
         user: "Admin"
     })
 });
+app.get('/agents/details/:region/:agent', (req, res) => {
+    res.render('agent-details', {
+        page: "details",
+        section: "agents",
+        user: "Admin",
+        region: req.params.region,
+        agent: req.params.agent
+    });
+});
 app.get('/agents/list', (req, res) => {
     res.send(agentsListData(null));
 });
@@ -115,6 +124,16 @@ app.get('/plugins', (req, res) => {
         user: "Admin"
     });
 });
+app.get('/plugins/details/:region/:agent/:plugin(*)', (req, res) => {
+    res.render('plugin-details', {
+        page: "details",
+        section: "plugins",
+        user: "Admin",
+        region: req.params.region,
+        agent: req.params.agent,
+        plugin: req.params.plugin
+    });
+});
 app.get('/plugins/info/:region/:agent/:plugin(*)', (req, res) => {
     res.send(pluginsInfoData(req.params.region, req.params.agent, req.params.plugin));
 });
@@ -147,6 +166,14 @@ app.get('/regions', (req, res) => {
         user: {
             name: "Admin"
         }
+    });
+});
+app.get('/regions/details/:region', (req, res) => {
+    res.render('region-details', {
+        page: "details",
+        section: "regions",
+        user: "Admin",
+        region: req.params.region
     });
 });
 app.get('/regions/list', (req, res) => {
@@ -299,17 +326,17 @@ function applicationsAddData() {
     return data;
 }
 function applicationsInfoData(id) {
-    var data = {"pipeline_id":"mock-pipeline-id","pipeline_name":"mock_pipeline","status_code":"10","status_desc":"Pipeline Active","nodes":[{"type":"dummy","node_name":"Plugin 1","node_id":"mock-node-id","isSource":false,"workloadUtil":0.0,"params":{"status_code":"10","status_desc":"iNode Active.","params":"pluginname:mock-pluginname,jarfile:mock-jar,version:mock-version,md5:mock-md5,location_agent:mock-agent,location_region:mock-region,resource_id:mock-resource-id,inode_id:mock-inode-id","inode_id":"mock-inode-id","resource_id":"mock-resource-id"}},{"type":"dummy","node_name":"Plugin 2","node_id":"mock-node-2-id","isSource":false,"workloadUtil":0.0,"params":{"status_code":"10","status_desc":"iNode Active.","params":"pluginname:mock-pluginname,jarfile:mock-jar,version:mock-version,md5:mock-md5,location_agent:mock-agent-2,location_region:mock-region,resource_id:mock-resource-2-id,inode_id:mock-inode-2-id","inode_id":"mock-inode-2-id","resource_id":"mock-resource-2-id"}}],"edges":[{"edge_id": "mock-edge-id", "node_from": "mock-node-id", "node_to": "mock-node-2-id"}]};
+    var data = {"pipeline_id":"mock-pipeline-id","pipeline_name":"mock_pipeline","status_code":"10","status_desc":"Pipeline Active","nodes":[{"type":"dummy","node_name":"Plugin 1","node_id":"mock-node-id","isSource":false,"workloadUtil":0.0,"params":{"status_code":"3","status_desc":"iNode Active.","params":"pluginname:mock-pluginname,jarfile:mock-jar,version:mock-version,md5:mock-md5,location_agent:mock-agent,location_region:mock-region,resource_id:mock-resource-id,inode_id:mock-inode-id","inode_id":"mock-inode-id","resource_id":"mock-resource-id"}},{"type":"dummy","node_name":"Plugin 2","node_id":"mock-node-2-id","isSource":false,"workloadUtil":0.0,"params":{"status_code":"8","status_desc":"iNode Active.","params":"pluginname:mock-pluginname,jarfile:mock-jar,version:mock-version,md5:mock-md5,location_agent:mock-agent-2,location_region:mock-region,resource_id:mock-resource-2-id,inode_id:mock-inode-2-id","inode_id":"mock-inode-2-id","resource_id":"mock-resource-2-id"}}],"edges":[{"edge_id": "mock-edge-id", "node_from": "mock-node-id", "node_to": "mock-node-2-id"}]};
     return data;
 }
 function applicationsNodeInfoData(inode, resource) {
     var data = {
         "isassignmentinfo": {
-            "agent": "agent-ff806552-258e-4a0a-9ab9-e994e49c3137",
-            "plugin": "plugin/2",
+            "agent": "mock-agent",
+            "plugin": "plugin/0",
             "resource_id": "ca7768c1-e568-4bd1-b9e1-2d3468470e27",
             "inode_id": "a8dcc078-287c-45c7-9dcf-0f22dce014eb",
-            "region": "region-247a2266-d428-4b52-9f34-a0dfdf022f5b"
+            "region": "mock-region"
         },
         "isassignmentresourceinfo": {}
     };

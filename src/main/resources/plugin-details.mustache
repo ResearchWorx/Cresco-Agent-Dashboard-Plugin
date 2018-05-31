@@ -1,0 +1,102 @@
+{{> header}}
+<!-- Breadcrumb-->
+<ol class="breadcrumb">
+    <li class="breadcrumb-item">Home</li>
+    <li class="breadcrumb-item"><a href="/plugins">Plugins</a></li>
+    <li class="breadcrumb-item active">{{ region }}-{{ agent }}-{{ plugin }}</li>
+    <!-- Breadcrumb Menu-->
+    <li class="breadcrumb-menu d-md-down-none">
+        <div class="btn-group" role="group" aria-label="Button group">
+
+        </div>
+    </li>
+</ol>
+<div class="container-fluid">
+    <div class="animated fadeIn">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <span style="font-size: 24px;"><i class="fa fa-align-justify"></i> Plugin Details</span>
+                        <div class="pull-right">
+                        </div>
+                    </div>
+                    <div class="card-body pb-0">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="callout callout-info">
+                                    <dl>
+                                        <dt>Region</dt><dd>{{ region }}</dd>
+                                        <dt>Agent</dt><dd>{{ agent }}</dd>
+                                        <dt>Plugin</dt><dd>{{ plugin }}</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <span style="font-size: 24px;"><i class="fa fa-align-justify"></i> Plugin Configuration</span>
+                    </div>
+                    <div class="card-body pb-0">
+                        <div class="row">
+                            <div id="plugin-body" class="col-sm-12"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    let region = `{{{region}}}`;
+    let agent = `{{{agent}}}`;
+    let plugin = `{{{plugin}}}`;
+    let plugin_body = $('#plugin-body');
+    $(function() {
+        getPluginConfig();
+        let timer = 0;
+        let PERIOD_VISIBLE = 5000;
+        let PERIOD_NOT_VISIBLE = 60000;
+        timer = setInterval(getPluginConfig, (document.hidden) ? PERIOD_NOT_VISIBLE : PERIOD_VISIBLE);
+        if(document.addEventListener) document.addEventListener("visibilitychange", visibilityChanged);
+        function visibilityChanged() {
+            clearTimeout(timer);
+            timer = setInterval(getPluginConfig, (document.hidden) ? PERIOD_NOT_VISIBLE : PERIOD_VISIBLE);
+        }
+    });
+    function getPluginConfig() {
+        $.ajax({
+            url: "/plugins/info/" + region + "/" + agent + "/" + plugin,
+            success: function(json) {
+                let formatted = syntaxHighlight(JSON.stringify(json, undefined, 4));
+                plugin_body.html(`<pre>${formatted}</pre>`);
+            },
+            error: function(data) {
+                console.error(data);
+            }
+        });
+    }
+    function syntaxHighlight(json) {
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+            let cls = 'number';
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'key';
+                } else {
+                    cls = 'string';
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'boolean';
+            } else if (/null/.test(match)) {
+                cls = 'null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+        });
+    }
+</script>
+{{> footer}}

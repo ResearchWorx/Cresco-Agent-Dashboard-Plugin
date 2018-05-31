@@ -65,6 +65,40 @@ public class RegionsController {
     }
 
     @GET
+    @Path("details/{region}")
+    @Produces(MediaType.TEXT_HTML)
+    public Response details(@CookieParam(AuthenticationFilter.SESSION_COOKIE_NAME) String sessionID,
+                            @PathParam("region") String region) {
+        try {
+            LoginSession loginSession = LoginSessionService.getByID(sessionID);
+            PebbleEngine engine = new PebbleEngine.Builder().build();
+            PebbleTemplate compiledTemplate = engine.getTemplate("regions/index.html");
+
+            MustacheFactory mf = new DefaultMustacheFactory();
+            Mustache mustache = mf.compile("region-details.mustache");
+
+            Map<String, Object> context = new HashMap<>();
+            if (loginSession != null)
+                context.put("user", loginSession.getUsername());
+            context.put("section", "regions");
+            context.put("page", "details");
+            context.put("region", region);
+
+            Writer writer = new StringWriter();
+            //compiledTemplate.evaluate(writer, context);
+            mustache.execute(writer, context);
+
+            return Response.ok(writer.toString()).build();
+        } catch (PebbleException e) {
+            return Response.ok("PebbleException: " + e.getMessage()).build();
+        } /*catch (IOException e) {
+            return Response.ok("IOException: " + e.getMessage()).build();
+        }*/ catch (Exception e) {
+            return Response.ok("Server error: " + e.getMessage()).build();
+        }
+    }
+
+    @GET
     @Path("list")
     @Produces(MediaType.APPLICATION_JSON)
     public Response list() {

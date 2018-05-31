@@ -4,7 +4,7 @@
   "description": "Development module for the Cresco Dashboard project",
   "main": "mock-server.js",
   "scripts": {
-    "bs": "browser-sync start --proxy \"http://localhost:5000\" --files \"mock-server.js\" \"*.mustache\"",
+    "bs": "browser-sync start --proxy \"http://localhost:5000\" --files \"js/*.js\" \"*.js\" \"*.mustache\"",
     "mock-server": "nodemon -e js,mustache mock-server.js",
     "serve": "npm-run-all --parallel mock-server bs"
   },
