@@ -137,6 +137,9 @@ app.get('/plugins/details/:region/:agent/:plugin(*)', (req, res) => {
 app.get('/plugins/info/:region/:agent/:plugin(*)', (req, res) => {
     res.send(pluginsInfoData(req.params.region, req.params.agent, req.params.plugin));
 });
+app.get('/plugins/kpi/:region/:agent/:plugin(*)', (req, res) => {
+    res.send(pluginsKPIData(req.params.region, req.params.agent, req.params.plugin));
+});
 app.get('/plugins/list', (req, res) => {
     res.send(pluginsListData(null, null));
 });
@@ -352,6 +355,15 @@ function applicationsExportData(id) {
  */
 function pluginsInfoData(region, agent, plugin) {
     var data = {"pluginname": "mock-pluginname", "jarfile": "mock-jar"}
+    return data;
+}
+function pluginsKPIData(region, agent, plugin) {
+    let data = [
+        {
+            "name": "controllerinfo_inode",
+            "metrics": "{\"controller\":[{\"name\":\"system.load.average.1m\",\"type\":\"NODE\",\"class\":\"GAUGE\",\"value\":\"2.8642578125\"},{\"name\":\"system.cpu.usage\",\"type\":\"NODE\",\"class\":\"GAUGE\",\"value\":\"0.14108723135271808\"},{\"name\":\"jvm.memory.committed\",\"type\":\"NODE\",\"class\":\"GAUGE\",\"value\":\"5898240.0\"},{\"name\":\"process.cpu.usage\",\"type\":\"NODE\",\"class\":\"GAUGE\",\"value\":\"0.05002657804450424\"},{\"name\":\"jvm.threads.peak\",\"type\":\"NODE\",\"class\":\"GAUGE\",\"value\":\"86.0\"},{\"name\":\"jvm.threads.live\",\"type\":\"NODE\",\"class\":\"GAUGE\",\"value\":\"85.0\"},{\"name\":\"jvm.memory.max\",\"type\":\"NODE\",\"class\":\"GAUGE\",\"value\":\"1.1010048E7\"},{\"name\":\"jvm.memory.used\",\"type\":\"NODE\",\"class\":\"GAUGE\",\"value\":\"1.3084992E7\"},{\"name\":\"system.cpu.count\",\"type\":\"NODE\",\"class\":\"GAUGE\",\"value\":\"8.0\"},{\"name\":\"jvm.classes.loaded\",\"type\":\"NODE\",\"class\":\"GAUGE\",\"value\":\"7873.0\"},{\"totaltime\":\"14708.963966\",\"max\":\"14636.039381\",\"mean\":\"1337.1785423636363\",\"name\":\"message.transaction.time\",\"count\":\"11\",\"type\":\"NODE\",\"class\":\"TIMER\"},{\"name\":\"jvm.classes.unloaded\",\"count\":\"0.0\",\"type\":\"NODE\",\"class\":\"COUNTER\"},{\"name\":\"jvm.buffer.memory.used\",\"type\":\"NODE\",\"class\":\"GAUGE\",\"value\":\"1.074557642E9\"},{\"name\":\"jvm.threads.daemon\",\"type\":\"NODE\",\"class\":\"GAUGE\",\"value\":\"38.0\"},{\"name\":\"jvm.buffer.count\",\"type\":\"NODE\",\"class\":\"GAUGE\",\"value\":\"5.0\"},{\"name\":\"jvm.buffer.total.capacity\",\"type\":\"NODE\",\"class\":\"GAUGE\",\"value\":\"1.074557642E9\"}]}"
+        }
+    ];
     return data;
 }
 function pluginsListData(region, agent) {

@@ -14280,4 +14280,9 @@ pre {
   color: #737373;
 }
 
+.metric-gauge {
+  width: 100% !important;
+  height: auto !important;
+}
+
 /*# sourceMappingURL=style.css.map */
