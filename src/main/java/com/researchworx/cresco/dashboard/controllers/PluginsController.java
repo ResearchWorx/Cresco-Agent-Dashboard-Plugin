@@ -151,6 +151,46 @@ public class PluginsController {
     }
 
     @GET
+    @Path("kpi/{region}/{agent}/{plugin:.*}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response kpi(@PathParam("region") String region,
+                         @PathParam("agent") String agent,
+                         @PathParam("plugin") String pluginID) {
+        logger.trace("Call to kpi({}, {}, {})", region, agent, pluginID);
+        try {
+            if (plugin == null)
+                return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+            MsgEvent request = new MsgEvent(MsgEvent.Type.EXEC, plugin.getRegion(), plugin.getAgent(),
+                    plugin.getPluginID(), "Agent List Request");
+            request.setParam("src_region", plugin.getRegion());
+            request.setParam("src_agent", plugin.getAgent());
+            request.setParam("src_plugin", plugin.getPluginID());
+            request.setParam("dst_region", plugin.getRegion());
+            request.setParam("dst_agent", plugin.getAgent());
+            request.setParam("dst_plugin", "plugin/0");
+            request.setParam("is_regional", Boolean.TRUE.toString());
+            request.setParam("is_global", Boolean.TRUE.toString());
+            request.setParam("globalcmd", "true");
+            request.setParam("action", "pluginkpi");
+            request.setParam("action_region", region);
+            request.setParam("action_agent", agent);
+            request.setParam("action_plugin", pluginID);
+            MsgEvent response = plugin.sendRPC(request);
+            if (response == null)
+                return Response.ok("{\"error\":\"Cresco rpc response was null\"}",
+                        MediaType.APPLICATION_JSON_TYPE).build();
+            String info = "{}";
+            if (response.getParam("pluginkpi") != null)
+                info = response.getCompressedParam("pluginkpi");
+            return Response.ok(info, MediaType.APPLICATION_JSON_TYPE).build();
+        } catch (Exception e) {
+            if (plugin != null)
+                logger.error("kpi({}, {}, {}) : {}", region, agent, pluginID, e.getMessage());
+            return Response.ok("{}", MediaType.APPLICATION_JSON_TYPE).build();
+        }
+    }
+
+    @GET
     @Path("list")
     @Produces(MediaType.APPLICATION_JSON)
     public Response list() {
