@@ -196,7 +196,8 @@ d3.radialMenu = function() {
         // Enter the groups
         var menuSegments = dataJoin .enter()
             .append("g")
-            .attr("class", "menu-segment-container");
+            .attr("class", "menu-segment-container")
+            .attr("style", "cursor: pointer;");
 
         menuSegments.append("title")
             .attr("class", "menu-segment-title")

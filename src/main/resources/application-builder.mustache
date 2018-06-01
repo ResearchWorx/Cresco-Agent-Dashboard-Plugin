@@ -18,8 +18,9 @@
                     <div class="card-header">
                         <span style="font-size: 24px;"><i class="fa fa-align-justify"></i> Cresco Application Builder IDE</span>
                         <div class="pull-right">
-                            <button type="button" class="btn btn-success" onclick="showAddPlugin()"><i class="fa fa-upload" aria-hidden="true"></i> Upload Plugin</button>
+                            <button type="button" class="btn btn-primary" onclick="showAddPlugin()"><i class="fa fa-upload" aria-hidden="true"></i> Upload Plugin</button>
                             <button type="button" class="btn btn-warning" onclick="showFAQ()"><i class="fa fa-question" aria-hidden="true"></i> Help</button>
+                            <button type="button" class="btn btn-success" onclick="previewCADL()"><i class="fa fa-cloud-upload" aria-hidden="true"></i> Submit Application</button>
                         </div>
                     </div>
                     <div class="card-block pb-0 d-flex align-content-stretch" style="min-height: 100%;">
@@ -87,10 +88,12 @@
                 <h4 class="modal-title">Previewing Application Definition</h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">x</span></button>
             </div>
-            <div class="modal-body" id="submit-application-modal-body"></div>
+            <div class="modal-body" id="submit-application-modal-body">
+                <pre id="submit-application-modal-body-pre" style="max-height: 500px; overflow-y: scroll;"></pre>
+            </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-success" onclick="submitCADL();">Submit Application</button>
+                <button type="button" class="btn btn-success" onclick="submitCADL();"><i class="fa fa-cloud-upload" aria-hidden="true"></i> Submit</button>
             </div>
         </div>
     </div>
@@ -120,6 +123,16 @@
                     </div>
                     <div class="col-sm-12">
                         <center><i class="fa fa-spinner fa-spin" style="font-size:48px"></i></center>
+                    </div>
+                </div>
+                <div class="row" id="upload-plugin-modal-success" style="width: 100%;display: none;">
+                    <div class="col-sm-12">
+                        <center><span style="font-size: 24px;">Your plugin was uploaded successfully.</span></center>
+                    </div>
+                </div>
+                <div class="row" id="upload-plugin-modal-error" style="width: 100%;display: none;">
+                    <div class="col-sm-12">
+                        <center><span style="font-size: 24px;">Your plugin failed to upload!</span></center>
                     </div>
                 </div>
             </div>
@@ -164,11 +177,21 @@
         });
     }
 
-    function generateTooltip(d) {
+    /*function generateTooltip(d) {
         var tooltip_html = "<div id='node-tooltip-title'>" + d.title + "</div>";
         for (var param in d.params) {
             tooltip_html += "<b>" + param + "</b>: " + d.params[param] + "<br>";
         }
+        return tooltip_html;
+    }*/
+
+    function generateTooltip(d) {
+        var tooltip_html = "<div id='node-tooltip-title'><h5>" + d.title + "</h5></div>";
+        tooltip_html += "<div id='node-tooltip-body'>";
+        for (var param in d.params) {
+            tooltip_html += "<span class='key'>" + param + ":</span> <span class='string'>" + d.params[param] + "</span><br>";
+        }
+        tooltip_html += "</div>";
         return tooltip_html;
     }
 
@@ -320,8 +343,8 @@
 
     function previewCADL() {
         editting_plugin = true;
-        var cadl = generateCADL();
-        $('#submit-application-modal-body').html('<pre style="max-height: 300px; overflow-y: scroll;">' + syntaxHighlight(JSON.stringify(cadl, undefined, 4)) + '</pre>');
+        let cadl = generateCADL();
+        $('#submit-application-modal-body-pre').html(syntaxHighlight(JSON.stringify(cadl, undefined, 4)));
         $('#submit-application-modal').modal('show');
     }
 
@@ -347,16 +370,16 @@
     function submitCADL() {
         editting_plugin = false;
         $('#submit-application-modal').modal('hide');
-        var allValidNodes = true;
+        let allValidNodes = true;
         $.each(nodes, function(i, v) {
             if (!checknode(v))
                 allValidNodes = false;
         });
         if (allValidNodes) {
-            var cadl = generateCADL();
+            let cadl = generateCADL();
             console.log("Submitting CADL");
             console.log(cadl);
-            var data = {};
+            let data = {};
             data.tenant_id = "0";
             data.pipeline = JSON.stringify(cadl, undefined, 4);
             console.log(data);
@@ -374,7 +397,7 @@
         cadl['pipeline_name'] = 'demo_pipeline';
         cadl['nodes'] = [];
         $.each(nodes, function(i, v) {
-            var node = {
+            let node = {
                 'type': 'dummy',
                 'node_name': v.title,
                 'node_id': v.id,
@@ -387,7 +410,7 @@
         cadl['edges'] = [];
         $.each(links, function(i, v) {
             if (v.right) {
-                var edge = {
+                let edge = {
                     'edge_id': '0',
                     'node_from': v.source.id,
                     'node_to': v.target.id
@@ -395,7 +418,7 @@
                 cadl['edges'].push(edge);
             }
             if (v.left) {
-                var edge = {
+                let edge = {
                     'edge_id': '0',
                     'node_from': v.target.id,
                     'node_to': v.source.id
@@ -408,6 +431,11 @@
 
     function showAddPlugin() {
         editting_plugin = true;
+        $('#upload-plugin-modal-submit-btn').css("display", "block");
+        $('#upload-plugin-modal-form').css("display", "block");
+        $('#upload-plugin-modal-waiting').css("display", "none");
+        $('#upload-plugin-modal-success').css("display", "none");
+        $('#upload-plugin-modal-error').css("display", "none");
         $('#upload-plugin-modal').modal('show');
     }
 
@@ -418,8 +446,11 @@
         data.append('pluginname', file.name);
         data.append('jarfile', file.name);
         data.append('file', $('#upload-plugin-modal-file')[0].files[0]);
+        $('#upload-plugin-modal-submit-btn').css("display", "none");
         $('#upload-plugin-modal-form').css("display", "none");
         $('#upload-plugin-modal-waiting').css("display", "block");
+        $('#upload-plugin-modal-success').css("display", "none");
+        $('#upload-plugin-modal-error').css("display", "none");
         console.log(data);
         $.ajax({
             url: '/plugins/uploadplugin',
@@ -429,19 +460,25 @@
             processData: false,
             contentType: false,
             success: function(result) {
-                $('#upload-plugin-modal').modal('hide');
+                //$('#upload-plugin-modal').modal('hide');
                 $('#upload-plugin-modal-file').val('');
-                $('#upload-plugin-modal-form').css("display", "block");
+                $('#upload-plugin-modal-submit-btn').css("display", "none");
+                $('#upload-plugin-modal-form').css("display", "none");
                 $('#upload-plugin-modal-waiting').css("display", "none");
-                alert("Plugin uploaded!");
+                $('#upload-plugin-modal-success').css("display", "block");
+                $('#upload-plugin-modal-error').css("display", "none");
+                //alert("Plugin uploaded!");
                 updateRepoData();
             },
             error: function(err) {
-                $('#upload-plugin-modal').modal('hide');
+                //$('#upload-plugin-modal').modal('hide');
                 $('#upload-plugin-modal-file').val('');
-                $('#upload-plugin-modal-form').css("display", "block");
+                $('#upload-plugin-modal-submit-btn').css("display", "none");
+                $('#upload-plugin-modal-form').css("display", "none");
                 $('#upload-plugin-modal-waiting').css("display", "none");
-                alert("Upload Failed: " + err);
+                $('#upload-plugin-modal-success').css("display", "none");
+                $('#upload-plugin-modal-error').css("display", "block");
+                //alert("Upload Failed: " + err);
                 updateRepoData();
                 console.log(err);
             }

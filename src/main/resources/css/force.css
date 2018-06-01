@@ -61,11 +61,6 @@ text.id {
 
 #node-tooltip {
     max-width: 500px;
-    /*background-color: #777;
-    border-radius: 8px;
-    padding: 8px;
-    border: 1px black solid;
-    color: white;*/
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
     pointer-events: auto;
     background-color: #fff;

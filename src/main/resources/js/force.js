@@ -18,12 +18,12 @@ var contextMenu = [
         action: function(data, index) {
             addnode(this);
         }
-    },{
+    }/*,{
         title: 'Preview CADL',
         action: function(data, index) {
             previewCADL();
         }
-    }
+    }*/
 ];
 
 var bg = svg.append('svg:rect')
