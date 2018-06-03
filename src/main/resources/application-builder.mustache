@@ -270,8 +270,8 @@
 
     function addParamField() {
         var paramHTML = "<div class='form-group row'>";
-        paramHTML += "<div class='col-sm-2'><input class='form-control' name='edit-plugin-param-keys[]' placeholder='Parameter Key' /></div>";
-        paramHTML += "<div class='col-sm-9'><input class='form-control' name='edit-plugin-param-values[]' placeholder='Parameter Value' /></div>";
+        paramHTML += "<div class='col-sm-2'><input class='form-control' name='edit-plugin-param-input-keys[]' placeholder='Parameter Key' /></div>";
+        paramHTML += "<div class='col-sm-9'><input class='form-control' name='edit-plugin-param-input-values[]' placeholder='Parameter Value' /></div>";
         paramHTML += "<button type='button' class='btn btn-danger' onclick='$(this).closest(\"div\").remove();'><i class='fa fa-trash'></i></button>";
         paramHTML += "</div>";
         $(paramHTML).insertBefore( $("#addParamBtn") );
