@@ -201,6 +201,12 @@
             let html = `<div class="callout callout-info"><h6 class="text-muted" style="width: 100%;">avg | max</h6><h3>${parseFloat(metric.mean).toFixed(2)} | ${parseFloat(metric.max).toFixed(2)}</h3></div>`;
             $(`#${group}-${subgroup}-${fixed_name}-body`).html(html);
         }
+        if (metric.class === "DISTRIBUTION_SUMMARY") {
+                    $(`#${group}-${subgroup}-${fixed_name}-body`).css("height", "206px");
+                    $(`#${group}-${subgroup}-${fixed_name}-body`).css("text-align", "center");
+                    let html = `<div class="callout callout-info"><h6 class="text-muted" style="width: 100%;">avg | max</h6><h3>${parseFloat(metric.mean).toFixed(2)} | ${parseFloat(metric.max).toFixed(2)}</h3></div>`;
+                    $(`#${group}-${subgroup}-${fixed_name}-body`).html(html);
+        }
     }
     function getPlugin() {
         $.ajax({
